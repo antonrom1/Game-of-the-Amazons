@@ -1,9 +1,11 @@
-from exceptions import *
+from src.exceptions import *
+
 
 class Pos2D:
     """
     Classe représentant une coordonnée (x, y) dans le plan (ou un vecteur dans le plan). Sert également de coordonnées sur le plateau.
     """
+
     def __init__(self, y, x):
         self.y_ = y
         self.x_ = x
@@ -59,7 +61,7 @@ class Pos2D:
         row = pos[1:]
         if not row.isnumeric():
             raise InvalidPositionError('Ligne inconnue: {row}. Doit être un nombre entier')
-        return Pos2D(int(row)-1, ord(col)-ord('a'))
+        return Pos2D(int(row) - 1, ord(col) - ord('a'))
 
     def __str__(self):
         return f"(x={self.x}, y={self.y})"
@@ -69,7 +71,7 @@ class Pos2D:
 
     def __eq__(self, other):
         return self.row == other.row \
-           and self.col == other.col
+               and self.col == other.col
 
     def __iadd__(self, offset):
         """
@@ -116,7 +118,7 @@ class Pos2D:
         """
         Calcule le produit scalaire self @ other
         """
-        return self.x*other.x + self.y*other.y
+        return self.x * other.x + self.y * other.y
 
     def __imul__(self, scalar):
         """
@@ -154,5 +156,6 @@ class Pos2D:
         Crée une copie de l'instance self
         """
         return Pos2D(x=self.x, y=self.y)
+
 
 Vec2D = Pos2D  # alias pour la classe Pos2D

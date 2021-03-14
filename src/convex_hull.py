@@ -1,5 +1,5 @@
-from pos2d import Pos2D
-from const import INF
+from src.pos2d import Pos2D
+from src.const import INF
 
 class ConvexHull(set):  # hérite de set
     """

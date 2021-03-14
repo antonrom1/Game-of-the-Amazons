@@ -1,10 +1,10 @@
 import random
 from abc import ABCMeta, abstractmethod
-from const import *
-from exceptions import *
-from action import Action
+from src.const import *
+from src.exceptions import *
+from src.action import Action
 import time
-import matrix
+import src.matrix as matrix
 from copy import deepcopy
 
 
@@ -326,7 +326,7 @@ class AIPlayer(Player):
             directions = list(deepcopy(DIRECTIONS))
 
             for dir in directions:
-                pos = action[i].copy() + dir
+                pos = action[0].copy() + dir
                 while board.is_valid_pos(pos) and board.grid[pos] is EMPTY:
                     moves.append(pos.copy())
                     pos += dir

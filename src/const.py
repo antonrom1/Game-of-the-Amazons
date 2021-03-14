@@ -1,4 +1,4 @@
-from pos2d import Vec2D
+from src.pos2d import Vec2D
 
 WHITE = '\u25CB'  # caractère du joueur blanc
 BLACK = '\u25CF'  # caractère du joueur noir

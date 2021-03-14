@@ -1,9 +1,9 @@
 from sys import argv
 from os.path import isfile
 
-from amazons import Amazons
-from players import AIPlayer
-from const import PLAYER_1, PLAYER_2
+from src.amazons import Amazons
+from src.players import AIPlayer
+from src.const import PLAYER_1, PLAYER_2
 
 def check_file():
     if len(argv) < 2:

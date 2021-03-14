@@ -1,6 +1,6 @@
-from const import *
-from exceptions import *
-from pos2d import Pos2D
+from src.const import *
+from src.exceptions import *
+from src.pos2d import Pos2D
 
 class Action:
     """

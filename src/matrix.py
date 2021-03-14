@@ -1,4 +1,4 @@
-from pos2d import Pos2D
+from src.pos2d import Pos2D
 
 class Matrix:
     """

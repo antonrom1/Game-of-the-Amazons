@@ -1,7 +1,6 @@
-from board import Board
-from exceptions import InvalidFormatError
-from players import *
-from const import *
+from src.board import Board
+from src.players import *
+from src.const import *
 
 def extract_positions(line):
     """

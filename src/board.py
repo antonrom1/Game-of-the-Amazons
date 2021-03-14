@@ -1,8 +1,8 @@
-from exceptions import InvalidActionError
-from action import Action, Pos2D
-from const import *
-from matrix import Matrix
-from convex_hull import QuickHull
+from src.exceptions import InvalidActionError
+from src.action import Action, Pos2D
+from src.const import *
+from src.matrix import Matrix
+from src.convex_hull import QuickHull
 
 def as_char(cell):
     return CHARS[cell]

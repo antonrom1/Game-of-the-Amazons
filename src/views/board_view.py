@@ -5,7 +5,7 @@ from PyQt5.QtCore import Qt, QRectF, QEvent, QObject, QPointF, QSizeF
 from PyQt5.QtGui import QBrush, QPen, QColor, QResizeEvent, QPixmap
 import sys
 from src.const import PLAYER_1, PLAYER_2, RESSOURCES, PLAYERS
-import src.players as players
+import src.models.players as players
 class BoardView(QtWidgets.QGraphicsView):
     MIN_TILE_SIZE = 25
 

@@ -1,8 +1,8 @@
 from sys import argv
 from os.path import isfile
 
-from src.amazons import Amazons
-from src.players import AIPlayer
+from src.models.amazons import Amazons
+from src.models.players import AIPlayer
 from src.const import PLAYER_1, PLAYER_2
 
 def check_file():

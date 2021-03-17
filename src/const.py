@@ -1,4 +1,5 @@
 from src.pos2d import Vec2D
+from os.path import join
 
 WHITE = '\u25CB'  # caractère du joueur blanc
 BLACK = '\u25CF'  # caractère du joueur noir
@@ -9,6 +10,8 @@ PLAYER_1 = 0
 PLAYER_2 = 1
 EMPTY = 2
 ARROW = 3
+
+PLAYERS = [PLAYER_1, PLAYER_2]
 
 WIN = 100000
 DRAW = 0
@@ -27,6 +30,10 @@ DIRECTIONS = tuple(Vec2D(*direction) for direction in DIRECTIONS)  # tuple des 8
 
 #       PLAYER_1  PLAYER_2  EMPTY  ARROW
 CHARS = [WHITE,   BLACK,    '.',   'X']
+
+QUEENS_ICONS_FILENAMES = ('bq.png', 'wq.png')
+# Pour que les Unix-like (MacOS, Linux) et Windows soient compatibles
+RESSOURCES = [join('ressources', 'assets', 'icons', filename) for filename in QUEENS_ICONS_FILENAMES]
 
 ERREUR_COUP = "Format du coup non valide"
 ERREUR_REINE = "Pas de reine à la position de départ"

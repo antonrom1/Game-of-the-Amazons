@@ -59,7 +59,7 @@ class Amazons:
         current_player_idx (int): indice du joueur dont c'est le tour
         status (EndOfGameStatus): état de la fin de partie
     """
-    def __init__(self, path):
+    def __init__(self, path, ai_ai_delay=DEFAULT_AI_AI_DELAY):
         """
         Args:
             path (str): chemin vers le fichier représentant le plateau
@@ -68,6 +68,7 @@ class Amazons:
         self.players = (HumanPlayer(self.board, PLAYER_1), AIPlayer(self.board, PLAYER_2))
         self.current_player_idx = 0
         self.status = None
+        self.ai_ai_delay = ai_ai_delay
 
     def play(self):
         """

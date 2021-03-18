@@ -4,6 +4,7 @@ from os.path import isfile
 from src.models.amazons import Amazons
 from src.models.players import AIPlayer
 from src.const import PLAYER_1, PLAYER_2
+from src.controller import Game
 
 def check_file():
     if len(argv) < 2:
@@ -15,11 +16,12 @@ def check_file():
     return True
 
 def main():
-    if not check_file():
-        return
-    game = Amazons(argv[1])
-    game.players = AIPlayer(game.board, PLAYER_1, 1, 2), AIPlayer(game.board, PLAYER_2, 1, 2)
-    game.play()
+    Game()
+    # if not check_file():
+    #     return
+    # game = Amazons(argv[1])
+    # game.players = AIPlayer(game.board, PLAYER_1, 1, 2), AIPlayer(game.board, PLAYER_2, 1, 2)
+    # game.play()
 
 
 if __name__ == '__main__':

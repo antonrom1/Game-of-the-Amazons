@@ -4,8 +4,15 @@ from PyQt5.QtWidgets import *
 from PyQt5.QtCore import Qt, QRectF, QEvent, QObject, QPointF, QSizeF
 from PyQt5.QtGui import QBrush, QPen, QColor, QResizeEvent, QPixmap
 import sys
-from src.const import PLAYER_1, PLAYER_2, RESSOURCES, PLAYERS
+from src.const import PLAYER_1, PLAYER_2, QUEEN_ICONS, PLAYERS
 import src.models.players as players
+
+
+# class Board(QtWidgets.QWidget):
+#     def __init__(self, size, color):
+#         self.__size = size
+#         Qt.Color
+
 class BoardView(QtWidgets.QGraphicsView):
     MIN_TILE_SIZE = 25
 
@@ -36,7 +43,7 @@ class BoardScene(QtWidgets.QGraphicsScene):
         super().__init__(*args, **kwargs)
         self.installEventFilter(self)
 
-        self.queens_pixmaps = {player: QPixmap(RESSOURCES[player]) for player in PLAYERS}
+        self.queens_pixmaps = {player: QPixmap(QUEEN_ICONS[player]) for player in PLAYERS}
 
         self.n = n
         self.size = 0
@@ -149,3 +156,13 @@ class BoardScene(QtWidgets.QGraphicsScene):
         self.tile_size = self.size / self.n
         self.clear()
         self._draw()
+
+
+
+
+
+if __name__ == "__main__":
+    app = QApplication(sys.argv)
+    window = MainWindow(["Human", "AI"], (0, 100))
+    window.show()
+    sys.exit(app.exec_())

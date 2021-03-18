@@ -1,0 +1,18 @@
+APP_NAME = "Amazkombat"
+AI_DELAY = "Délai IA"
+SETTINGS = "Paramètres"
+START_GAME = "Commencer à jouer"
+LOAD_FILE = "Charger un fichier"
+LOAD_ANOTHER_FILE = "Charger un autre fichier"
+AI_PLAYER = "IA"
+HUMAN_PLAYER = "Humain"
+RESTART_GAME = "Recommencer"
+PLAYER = "Joueur"
+SELECT_BOARD_FILE = "Sélectionnez un fichier plateau"
+BOARD_FILE_EXTENSION = "Fichiers texte (*txt)"
+NO_FILE = "Aucun fichier"
+ERROR = "Erreur"
+INCORRECT_FILE = "Fichier incorrectement défini"
+REMOVE = "Supprimer"
+
+PLAYER_TYPES_LIST = [HUMAN_PLAYER, AI_PLAYER]

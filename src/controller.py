@@ -1,28 +1,44 @@
 from src.models.amazons import Amazons
-from src.views import app, board_view, window, settings
-from src.const import PLAYERS, DEFAULT_AI_AI_DELAY
+from src.views import app, board_view, window, new_game_settings
+from src.const import PLAYERS, AI_AI_DELAY_DEFAULT
+from src.models.players import HumanPlayer, AIPlayer
+from src.views.strings import HUMAN_PLAYER, AI_PLAYER
 
-class Game:
+
+class Game(new_game_settings.NewGameSettingsDelegate):
     def __init__(self):
         self.app = app.AmazkombatApp()
 
-        self.settings_view = settings.Settings(PLAYERS, self.handle_ai_delay_change, self.is_file_valid)
-        self.settings_view.show()
+        self.new_game_settings_view = new_game_settings.NewGameSettings(self, PLAYERS)
+        self.new_game_settings_view.show()
 
-        self.ai_ai_delay = DEFAULT_AI_AI_DELAY
+        self.ai_ai_delay = AI_AI_DELAY_DEFAULT
         self.game = None
 
         self.app.exec_()
 
-    def is_file_valid(self, file):
+    ####
+    #  settings delegate
+    ####
+
+    def is_board_file_valid(self, file_path) -> bool:
         try:
-            self.game = Amazons(file, self.ai_ai_delay)
+            Amazons(file_path, self.ai_ai_delay)
+            return True
+        except:
+            return False
+
+    def save_settings(self, file_path, players_str, ai_ai_delay) -> bool:
+        try:
+            self.game = Amazons(file_path, self.ai_ai_delay)
         except:
             return False
         else:
-            return True
+            players = []
+            for i, player_str in enumerate(players_str):
+                cls = HumanPlayer if player_str == HUMAN_PLAYER else AIPlayer
+                player = cls(self.game.board, PLAYERS[i])
+                players.append(player)
 
-    def handle_ai_delay_change(self, new_val):
-        self.ai_ai_delay = new_val
-        if self.game is not None:
-            self.game.ai_ai_delay = self.ai_ai_delay
+            self.game.players = players
+            return True

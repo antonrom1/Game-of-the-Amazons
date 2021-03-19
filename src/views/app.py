@@ -2,7 +2,7 @@ from PyQt5.QtWidgets import QWidget, QApplication
 from PyQt5.QtGui import QIcon
 from src.const import *
 from src.views.strings import APP_NAME
-from src.views.settings import Settings
+from src.views.new_game_settings import NewGameSettings
 
 
 class AmazkombatApp(QApplication):

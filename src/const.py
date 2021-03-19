@@ -17,8 +17,8 @@ WIN = 100000
 DRAW = 0
 # LOSS = -WIN
 
-AI_AI_DELAY_MINMAX = (1, 2)
-DEFAULT_AI_AI_DELAY = 1.5
+AI_AI_DELAY_MINMAX = (500, 2000)
+AI_AI_DELAY_DEFAULT = 1500
 
 NORTH =      (1, 0)
 NORTH_EAST = (1, 1)
@@ -47,7 +47,7 @@ MESSAGE_COUP = "Joueur {}, donnez un coup de format 'position reine avant > posi
 ###############
 # GENERAL STUFF
 # BOARD
-# PLAYER_TYPES = {"Humain": players.HumanPlayer, "IA": players.AIPlayer}
+# PLAYER_TYPES = {"Humain": players_str.HumanPlayer, "IA": players_str.AIPlayer}
 DEFAULT_TILE_COLORS = ["af3232", "ffd7c8"]
 
 # ASSETS

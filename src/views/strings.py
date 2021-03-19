@@ -1,18 +1,36 @@
 APP_NAME = "Amazkombat"
-AI_DELAY = "Délai IA"
+
+
+# SETTINGS
+
+
 SETTINGS = "Paramètres"
-START_GAME = "Commencer à jouer"
-LOAD_FILE = "Charger un fichier"
-LOAD_ANOTHER_FILE = "Charger un autre fichier"
+
+PLAYER = "Joueur"
 AI_PLAYER = "IA"
 HUMAN_PLAYER = "Humain"
-RESTART_GAME = "Recommencer"
-PLAYER = "Joueur"
+PLAYER_TYPES_LIST = [HUMAN_PLAYER, AI_PLAYER]
+
+AI_DELAY = "Délai IA"
+
+NO_FILE = "Aucun fichier"
+REMOVE = "Supprimer"
+LOAD_FILE = "Charger un fichier"
+LOAD_ANOTHER_FILE = "Charger un autre fichier"
 SELECT_BOARD_FILE = "Sélectionnez un fichier plateau"
 BOARD_FILE_EXTENSION = "Fichiers texte (*txt)"
-NO_FILE = "Aucun fichier"
 ERROR = "Erreur"
 INCORRECT_FILE = "Fichier incorrectement défini"
-REMOVE = "Supprimer"
+SAVE_SETTINGS_ERROR = "Une erreur est survenue lors de la sauvegarde des nouveaux paramètres."
 
-PLAYER_TYPES_LIST = [HUMAN_PLAYER, AI_PLAYER]
+CANCEL = "Annuler"
+SAVE = "Appliquer"
+
+
+# GAME
+
+
+START_GAME = "Commencer à jouer"
+RESTART_GAME = "Recommencer"
+
+

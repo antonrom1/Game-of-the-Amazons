@@ -59,7 +59,7 @@ class Amazons:
         current_player_idx (int): indice du joueur dont c'est le tour
         status (EndOfGameStatus): état de la fin de partie
     """
-    def __init__(self, path, ai_ai_delay=DEFAULT_AI_AI_DELAY):
+    def __init__(self, path, ai_ai_delay=AI_AI_DELAY_DEFAULT):
         """
         Args:
             path (str): chemin vers le fichier représentant le plateau

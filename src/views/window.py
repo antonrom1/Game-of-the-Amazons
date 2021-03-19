@@ -4,7 +4,7 @@ from src.views.board_view import BoardView
 import src.views.strings as strings
 
 
-class AmazkombatWindow(QWidget):
+class MainWindow(QWidget):
     def __init__(self, board_view: BoardView):
         super().__init__()
         self.setWindowTitle(strings.APP_NAME)

@@ -199,21 +199,19 @@ class NewGameSettings(QWidget):
         """
         file_path, _ = QFileDialog.getOpenFileName(self, strings.LOAD_FILE, BOARDS_DIR,
                                                    strings.BOARD_FILE_EXTENSION)
-        # ignorer le cas où l'utilisateur clique sur cancel
-        if file_path != '':
+
+        if file_path.strip():  # ignorer le cas où l'utilisateur clique sur cancel
             if not self.delegate.is_board_file_valid(file_path):
                 # fichier non valide
-                # afficher une fenêtre warning pour prévenir l'utilisateur que le fichier n'est pas correct
-                warning_box = QMessageBox()
-                warning_box.setIcon(QMessageBox.Warning)
-                warning_box.setText(strings.ERROR)
-                warning_box.setText(strings.INCORRECT_FILE)
-                warning_box.setDefaultButton(QMessageBox.Ok)
-                warning_box.exec()
-            else:
-                # fichier valide
+                # prévenir l'utilisateur que le fichier n'est pas correct
+                self._warn(strings.INCORRECT_FILE)
+            else:  # fichier valide
+                self.board_file_path = file_path
+
+                # mettre le texte du label au nom du fichier
                 file_name = path.split(file_path)[-1]
                 self.curr_file_status_label.setText(file_name)
+
                 self.disable_enable_buttons()
             self.update_load_file_button_label()
 
@@ -222,6 +220,8 @@ class NewGameSettings(QWidget):
         self.curr_file_status_label.setText(strings.NO_FILE)
         self.disable_enable_buttons()
         self.update_load_file_button_label()
+
+        self.board_file_path = None
 
     ####
     # SAVE CHANGES
@@ -244,7 +244,7 @@ class NewGameSettings(QWidget):
 
     def handle_save(self):
         if self.board_file_path != strings.NO_FILE:
-            board = self.board_file_path
+            board = path.abspath(self.board_file_path)
         else:
             board = None
 
@@ -253,21 +253,21 @@ class NewGameSettings(QWidget):
         else:
             delay = None
 
-        players = [combo.currentText() for combo in self.player_combos]
+        players = [combo.currentText() for combo in self.player_combos.values()]
 
         succ = self.delegate.save_settings(board, players, delay)
 
         if succ:
             self.close()
         else:
-            self.warn(strings.SAVE_SETTINGS_ERROR)
+            self._warn(strings.SAVE_SETTINGS_ERROR)
 
     ####
     # WARNING
     ####
 
     @staticmethod
-    def _warn(mess, buttons=(QMessageBox.Ok,)):
+    def _warn(mess, buttons=QMessageBox.Ok):
         warning_box = QMessageBox()
         warning_box.setIcon(QMessageBox.Warning)
         warning_box.setText(strings.ERROR)

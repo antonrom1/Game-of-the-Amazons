@@ -1,11 +1,11 @@
 from src.models.amazons import Amazons
-from src.views import app, board_view, window, new_game_settings
+from src.views import app, new_game_settings
 from src.const import PLAYERS, AI_AI_DELAY_DEFAULT
 from src.models.players import HumanPlayer, AIPlayer
 from src.views.strings import HUMAN_PLAYER, AI_PLAYER
 
 
-class Game(new_game_settings.NewGameSettingsDelegate):
+class NewGameViewController(new_game_settings.NewGameSettingsDelegate):
     def __init__(self):
         self.app = app.AmazkombatApp()
 
@@ -16,6 +16,10 @@ class Game(new_game_settings.NewGameSettingsDelegate):
         self.game = None
 
         self.app.exec_()
+
+    def load_game_ui(self):
+        assert isinstance(self.game, Amazons)
+
 
     ####
     #  settings delegate
@@ -31,14 +35,18 @@ class Game(new_game_settings.NewGameSettingsDelegate):
     def save_settings(self, file_path, players_str, ai_ai_delay) -> bool:
         try:
             self.game = Amazons(file_path, self.ai_ai_delay)
-        except:
+        except Exception as e:
             return False
         else:
             players = []
             for i, player_str in enumerate(players_str):
-                cls = HumanPlayer if player_str == HUMAN_PLAYER else AIPlayer
+                if player_str == HUMAN_PLAYER:
+                    cls = HumanPlayer
+                elif player_str == AIPlayer:
+                    cls = AIPlayer
+                else:
+                    raise ValueError("players_str ne correspondent pas aux types de joueurs définis")
                 player = cls(self.game.board, PLAYERS[i])
                 players.append(player)
-
             self.game.players = players
             return True

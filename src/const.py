@@ -45,7 +45,7 @@ MESSAGE_COUP = "Joueur {}, donnez un coup de format 'position reine avant > posi
 ###############
 # GUI
 ###############
-# GENERAL STUFF
+
 # BOARD
 # PLAYER_TYPES = {"Humain": players_str.HumanPlayer, "IA": players_str.AIPlayer}
 DEFAULT_TILE_COLORS = ["af3232", "ffd7c8"]

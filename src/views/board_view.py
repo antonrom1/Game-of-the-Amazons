@@ -1,22 +1,14 @@
 from PyQt5 import QtWidgets
-from PyQt5.QtSvg import QSvgWidget
 from PyQt5.QtWidgets import *
-from PyQt5.QtCore import Qt, QRectF, QEvent, QObject, QPointF, QSizeF
+from PyQt5.QtCore import Qt, QRectF, QPointF
 from PyQt5.QtGui import QBrush, QPen, QColor, QResizeEvent, QPixmap
-import sys
 from src.const import PLAYER_1, PLAYER_2, QUEEN_ICONS, PLAYERS
-import src.models.players as players
 
-
-# class Board(QtWidgets.QWidget):
-#     def __init__(self, size, color):
-#         self.__size = size
-#         Qt.Color
 
 class BoardView(QtWidgets.QGraphicsView):
     MIN_TILE_SIZE = 25
 
-    def __init__(self, n, parent, *args, **kwargs):
+    def __init__(self, n, parent, pieces, *args, **kwargs):
         self.board_scene = BoardScene(n, parent)
         super().__init__(self.board_scene, *args, **kwargs)
 
@@ -25,7 +17,7 @@ class BoardView(QtWidgets.QGraphicsView):
         self.setMinimumSize(*(self.MIN_TILE_SIZE * n,) * 2)
         self.n = n
 
-        self.board_scene.add_pieces({(1, 1): PLAYER_1, (2, 3): PLAYER_2})
+        self.board_scene.add_pieces(pieces)
         self.board_scene.redraw(n, self.rect())
 
         self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
@@ -33,7 +25,6 @@ class BoardView(QtWidgets.QGraphicsView):
 
     def resizeEvent(self, event: QResizeEvent) -> None:
         super().resizeEvent(event)
-
         self.board_scene.redraw(self.n, self.rect())
 
 
@@ -158,11 +149,3 @@ class BoardScene(QtWidgets.QGraphicsScene):
         self._draw()
 
 
-
-
-
-if __name__ == "__main__":
-    app = QApplication(sys.argv)
-    window = MainWindow(["Human", "AI"], (0, 100))
-    window.show()
-    sys.exit(app.exec_())

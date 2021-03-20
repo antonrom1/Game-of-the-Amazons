@@ -6,24 +6,14 @@ from src.views.strings import HUMAN_PLAYER, AI_PLAYER
 
 
 class NewGameViewController(new_game_settings.NewGameSettingsDelegate):
-    def __init__(self):
-        self.app = app.AmazkombatApp()
-
+    def __init__(self, delegate):
         self.new_game_settings_view = new_game_settings.NewGameSettings(self, PLAYERS)
         self.new_game_settings_view.show()
 
         self.ai_ai_delay = AI_AI_DELAY_DEFAULT
         self.game = None
 
-        self.app.exec_()
-
-    def load_game_ui(self):
-        assert isinstance(self.game, Amazons)
-
-
-    ####
-    #  settings delegate
-    ####
+        self.delegate = delegate
 
     def is_board_file_valid(self, file_path) -> bool:
         try:
@@ -42,11 +32,17 @@ class NewGameViewController(new_game_settings.NewGameSettingsDelegate):
             for i, player_str in enumerate(players_str):
                 if player_str == HUMAN_PLAYER:
                     cls = HumanPlayer
-                elif player_str == AIPlayer:
+                elif player_str == AI_PLAYER:
                     cls = AIPlayer
                 else:
                     raise ValueError("players_str ne correspondent pas aux types de joueurs définis")
                 player = cls(self.game.board, PLAYERS[i])
                 players.append(player)
             self.game.players = players
+            self.delegate.new_game_created(self.game)
             return True
+
+
+class NewGameViewControllerDelegate:
+    def new_game_created(self, game: Amazons):
+        raise NotImplemented

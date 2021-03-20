@@ -229,6 +229,7 @@ class NewGameSettings(QWidget):
 
     def setup_save_cancel_buttons(self):
         self.save_button = QPushButton(strings.SAVE)
+        self.save_button.setDefault(True)
         cancel_button = QPushButton(strings.CANCEL)
 
         cancel_button.clicked.connect(self.handle_cancel)
@@ -279,7 +280,7 @@ class NewGameSettings(QWidget):
 class NewGameSettingsDelegate:
 
     def is_board_file_valid(self, file_path) -> bool:
-        raise NotImplemented('is_board_file_valid doit être implémenté')
+        raise NotImplemented
 
     def save_settings(self, file_path, players_str, ai_ai_delay) -> bool:
-        raise NotImplemented('save_settings doit être implémenté')
+        raise NotImplemented

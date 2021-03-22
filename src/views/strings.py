@@ -24,11 +24,10 @@ INCORRECT_FILE = "Fichier incorrectement défini"
 SAVE_SETTINGS_ERROR = "Une erreur est survenue lors de la sauvegarde des nouveaux paramètres."
 
 CANCEL = "Annuler"
-SAVE = "Appliquer"
+SAVE = "Commencer"
 
 
 # GAME
-
 
 START_GAME = "Commencer à jouer"
 RESTART_GAME = "Recommencer"

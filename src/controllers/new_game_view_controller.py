@@ -1,9 +1,8 @@
 from src.models.amazons import Amazons
-from src.views import app, new_game_settings
+from src.views import new_game_settings
 from src.const import PLAYERS, AI_AI_DELAY_DEFAULT
 from src.models.players import HumanPlayer, AIPlayer
 from src.views.strings import HUMAN_PLAYER, AI_PLAYER
-
 
 class NewGameViewController(new_game_settings.NewGameSettingsDelegate):
     def __init__(self, delegate):

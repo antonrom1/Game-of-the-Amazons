@@ -8,7 +8,7 @@ from src.controllers.app_controller import AppController
 
 def check_file():
     if len(argv) < 2:
-        print('Usage: python3 partie3.py <path>')
+        print('Usage: python3 partie4.py <path>')
         return False
     if not isfile(argv[1]):
         print(f'{argv[1]} n\'est pas un chemin valide vers un fichier')
@@ -16,15 +16,16 @@ def check_file():
     return True
 
 def main():
-    AppController()
-    # if not check_file():
-    #     return
-    # game = Amazons(argv[1])
-    # game.players = AIPlayer(game.board, PLAYER_1, 1, 2), AIPlayer(game.board, PLAYER_2, 1, 2)
-    # game.play()
+    if not check_file():
+        AppController()
+        return
+    game = Amazons(argv[1])
+    game.players = AIPlayer(game.board, PLAYER_1, 1, 2), AIPlayer(game.board, PLAYER_2, 1, 2)
+    game.play()
 
 
 if __name__ == '__main__':
     import random
+
     random.seed(0xCAFE)
     main()

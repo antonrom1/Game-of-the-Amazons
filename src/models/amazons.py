@@ -70,6 +70,8 @@ class Amazons:
         self.status = None
         self.ai_ai_delay = ai_ai_delay
 
+        self.turn_count = 0
+
     def play(self):
         """
         Joue une partie du jeu des amazones
@@ -80,6 +82,8 @@ class Amazons:
             self.players[self.current_player_idx].play()
             # On passe au joueur suivant
             self.current_player_idx = 1-self.current_player_idx
+
+            self.turn_count += 1
         print(self.board)  # On affiche le plateau après le dernier coup
         self.show_winner()  # On montre qui a gagné
 

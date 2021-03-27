@@ -9,7 +9,9 @@ from src.models.board import EndOfGameStatus
 from src.models.pos2d import Pos2D
 from random import shuffle
 from numba import njit
+from numba.experimental import jitclass
 from numba.typed import List
+from enum import Enum, auto
 
 class Player(metaclass=ABCMeta):
     """
@@ -108,12 +110,12 @@ class AIPlayer(Player):
     """
     Spécialisation de la classe Player représentant un joueur utilisant un minimax
     """
+    LINEAR_COMB_COEFS = 1, 1, 1, 1
 
-    def __init__(self, board, player_id, fact=0, timeout=2, m_m=1, m_t=0.25, m_r=1):
+    def __init__(self, board, player_id, fact=0, timeout=2):
         super().__init__(board, player_id)
         self.t = timeout
         self.timeout = timeout
-        self.m_m, self.m_t, self.m_r = m_m, m_t, m_r
         self.fact = fact
         self.timer = Timer()
         self.fast_board = FastBoard(board, self.player_id)
@@ -153,17 +155,19 @@ class AIPlayer(Player):
         best_move = None
 
         while True:
-            best_child, exited_prematurely = self.minimax(depth, parent_node)
+            best_child = self.minimax(depth, parent_node)
 
-            depth += 1
-            should_go_deeper = not exited_prematurely and depth <= max_depth and not self.timer.timeouts_soon()
-            if ((not exited_prematurely) or best_move is None) and best_child.action is not None:
+            should_go_deeper = not self.timer.timeouts_soon() and depth <= max_depth
+
+            if best_child.action is not None:
                 best_move = best_child.action
 
             if not should_go_deeper:
                 break
 
-        print(self.timer.time, best_move, f"depth: {depth - 1}")
+            depth += 1
+
+        print(self.timer.time, best_move, f"depth: {depth}")
 
         # s'éliminer si le timer a timed out
         assert not self.timer.timed_out and best_move is not None, f"Timed out or no move found {self.timer.time}, {best_move}"
@@ -174,7 +178,7 @@ class AIPlayer(Player):
 
         return action
 
-    def minimax(self, depth, parent_node, alpha=-INF, beta=+INF, maximizing=True):
+    def minimax(self, depth, parent_node, alpha=-INF, beta=+INF, maximizing=True) -> MinimaxNode:
         """
         Détermine le coup optimal à jouer selon l'algorithme minimax.
 
@@ -194,7 +198,7 @@ class AIPlayer(Player):
                 this way, we first test the (probably) best results, and we will prune the rest (with ɑ-β)
 
         """
-        exited_prematurely = False
+        best_child = None
 
         if maximizing:
             best_score = -INF
@@ -209,11 +213,11 @@ class AIPlayer(Player):
             parent_node.score = WIN + depth
             if winner == self.other_player_id:
                 parent_node.score = -parent_node.score
-            return parent_node, exited_prematurely
+            return parent_node
 
         if depth == 0:
-            parent_node.score = self.objective_function(player)
-            return parent_node, exited_prematurely
+            parent_node.score = self.objective_function()
+            return parent_node
 
         if not parent_node.children:
             parent_node.children[:] = [MinimaxNode(action) for action in self.fast_board.possible_actions(player)]
@@ -229,11 +233,15 @@ class AIPlayer(Player):
 
         for child in parent_node.children:
             self.fast_board.act(*child.action, player)
-            score = self.minimax(depth - 1, child, alpha, beta, not maximizing)[0].score
+
+            score = self.minimax(depth - 1, child, alpha, beta, not maximizing).score
+
             child.score = score
 
             self.fast_board.undo()
+
             # Si on trouve un meilleur score
+
             if (score > best_score and maximizing) or (score < best_score and not maximizing):
                 best_child = child
                 best_score = score
@@ -244,26 +252,31 @@ class AIPlayer(Player):
                 else:
                     beta = min(beta, score)
 
-                # prune
+                # alpha-beta pruning
                 if beta <= alpha:
                     break
 
             if self.timer.timeouts_soon():
-                exited_prematurely = True
                 break
-            # il est plus rapide de retourner la 1e meilleure action que gérer une liste et choisir un nombre aléatoire
-        parent_node.score = alpha if player == self.player_id else beta
-        if best_child.action is None:
+
+        if best_child is None:
             raise Exception("L'IA n'a pas réussi à trouver d'actions")
+
+        # plus rapide de retourner la 1e meilleure meilleure action que gérer une liste des meilleures actions
+        parent_node.score = alpha if player == self.player_id else beta
 
         # pour que les actions soient triées de manière plus appropriée pour les profondeurs + hautes
         parent_node.score = best_score
-        return best_child, exited_prematurely
 
-    def objective_function(self, curr_player):
-        res = self.fast_board.first_order_game_eval()
-        # if self.player_id == PLAYER_2:
-        #     res += self.fast_board.monte_carlo(16, 1, curr_player) >> 5
+        return best_child
+
+    def objective_function(self):
+        """La fonction économique pour minimax"""
+        res = self.fast_board.heuristics_linear_comb(*self.LINEAR_COMB_COEFS)
+
+        # l'évaluation avec monte carlo demande trop de ressources, elle n'est pas envisageable
+        # res += self.fast_board.monte_carlo(16, 1, curr_player) >> 5
+
         return res
 
 
@@ -294,14 +307,13 @@ class Timer:
         except TypeError:
             raise ValueError("No time limit defined")
 
-
 class FastBoard:
     DIRECTIONS = np.array([(i, j) for i in range(-1, 2, 1) for j in range(-1, 2, 1) if not 0 == i == j], dtype=np.int8)
 
     def __init__(self, board, player):
         self.history = []
         self.N = board.N
-        self.grid = np.array(board.grid.grid, dtype=np.uint8)
+        self.grid = np.array(board.grid.grid, dtype=np.int8)
         self.queens = [list(map(tuple, np.argwhere(self.grid == q))) for q in (PLAYER_1, PLAYER_2)]
         self.empty_cells = self.grid == EMPTY
 
@@ -326,11 +338,15 @@ class FastBoard:
         else:
             return EndOfGameStatus(*map(int, scores))
 
-    def first_order_game_eval(self):
+    def heuristics_linear_comb(self, terr_coef=1, reach_coef=1, mobility_coef=1, influence_coef=1):
         terr, reach = self.territory_reachability()
         mobility = self.mobility_evaluation()
         influence = self.last_moved_queen_influence()
-        return terr + reach + mobility + influence
+        res = terr_coef * terr + reach_coef * reach + mobility_coef * mobility + influence_coef * influence
+        return res
+
+    def filled_ratio(self):
+        return np.count_nonzero(self.empty_cells) / self.N ** 2
 
     def act(self, from_pos, to_pos, arr_pos, player):
         self.history.append((from_pos, to_pos, arr_pos, player))
@@ -371,7 +387,7 @@ class FastBoard:
                 else:
                     action = random.choice(self.possible_actions(curr_player))
                 self.act(*action, curr_player)
-            evaluation_res += self.first_order_game_eval()
+            evaluation_res += self.heuristics_linear_comb()
             for _ in range(depth):
                 self.undo()
         self._cached_moves, self._cached_actions = cache
@@ -384,7 +400,7 @@ class FastBoard:
         while prev_added:
             new_positions = []
             for from_pos in prev_added:
-                for pos in self.possible_moves(from_pos):
+                for pos in self.possible_moves_numba(from_pos):
                     if reachability_grid[pos] == 0:
                         reachability_grid[pos] = reachability
                         new_positions.append(pos)
@@ -393,16 +409,22 @@ class FastBoard:
         return reachability_grid
 
     def territory_reachability(self):
+        """
+        Renvoie la différence entre le nombre de cases qui appartiennent à chaque joueur ainsi que la différence
+        entre les cases atteignables.
+
+        Le territoire d'un joueur est défini comme suit:
+            Une case appartient à un joueur si il peut atteindre cette case en moins de mouvements
+            (sans considérer la phase du tir des flèches), que l'autre joueur.
+
+        Les cases atteignables sont définis tel que une cases atteignable est une cases qu'un joueur peut atteindre
+
+        return: (int, int)
+        """
         this_reachability = self._player_reachability(self.player)
         other_reachability = self._player_reachability(self.other_player)
 
         # si m[i, j] > 0, m[i, j] appartient au joueur actuel, si m[i, j] = 0, aucun, sinon l'autre joueur
-
-        ## TODO: trouver un moyen de dire 1 si this < other et this != 0 ou other == 0 and this != 0 etc.
-        # 2 1 0
-        # 1 2 0
-        # 0 1 0
-        # 1 0 0
 
         def territory_solution(p1, p2):
             if p1 > p2 > 0 or p2 > p1 == 0:
@@ -411,27 +433,34 @@ class FastBoard:
                 return 1
             return 0
 
-        territory = np.sum(np.fromiter(map(territory_solution, this_reachability.flat, other_reachability.flat), dtype=np.int8))
+        territory = np.sum(
+            np.fromiter(map(territory_solution, this_reachability.flat, other_reachability.flat), dtype=np.int8))
         reachability = np.count_nonzero(this_reachability) - np.count_nonzero(other_reachability)
         return territory, reachability
 
     def last_moved_queen_influence(self):
+        """
+        Renvoie le nombre de mouvements possibles de la dernière reine déplacée
+        """
         try:
             queen = self.history[-1][0]
         except IndexError:
             return 0
         else:
-            return len(self.possible_moves(queen))
+            return len(self.possible_moves_numba(queen))
 
     def mobility_evaluation(self):
+        """Renvoie la différence entre le nombre d'actions possibles des reines"""
         return len(self.possible_actions(self.player)) - len(self.possible_actions(self.other_player))
 
     def permutate(self, pos1, pos2):
+        """Permute deux cases du plateau"""
         self.grid[pos1], self.grid[pos2] = self.grid[pos2], self.grid[pos1]
 
     # def monte_carlo(self, depth):
 
     def undo(self):
+        """Annule la dernière action effectuée"""
         from_pos, to_pos, arr_pos, player = self.history.pop()
 
         # supprimer la flèche avant de permutter si la flèche est à la position de départ de la reine
@@ -447,6 +476,7 @@ class FastBoard:
         self.delete_cache()
 
     def has_moves(self, player):
+        """Fonction booléenne qui renvoie si le joueur player peut joueur"""
         return bool(self.possible_actions(player, return_first_found=True))
 
     def __repr__(self):
@@ -458,6 +488,7 @@ class FastBoard:
         return res
 
     def possible_moves_numba(self, from_pos, ignore_pos=None, return_first_found=False, cache=True):
+        """Renvoie les mouvements possibles d'un"""
         if cache:
             cache_key = from_pos, ignore_pos
             if self._cached_moves.get(cache_key, False):
@@ -466,23 +497,23 @@ class FastBoard:
         if ignore_pos:
             ignore_pos_np = np.array(ignore_pos, dtype=np.int8)
         res = self._possible_moves_numba(self.DIRECTIONS,
-                                   self.N,
-                                   self.empty_cells,
-                                   np.array(from_pos, dtype=np.int8),
-                                   ignore_pos_np,
-                                   return_first_found=return_first_found)
+                                         self.N,
+                                         self.empty_cells,
+                                         np.array(from_pos, dtype=np.int8),
+                                         ignore_pos_np,
+                                         return_first_found=return_first_found)
         if cache:
-            pass # TODO
+            pass  # TODO
         return list(map(tuple, res))
 
     @staticmethod
     @njit()
     def _possible_moves_numba(DIR,
-                             N,
-                             empty_cells,
-                             from_pos,
-                             ignore_pos=np.array([-1, -1], dtype=np.int8),
-                             return_first_found: bool = False):
+                              N,
+                              empty_cells,
+                              from_pos,
+                              ignore_pos=np.array([-1, -1], dtype=np.int8),
+                              return_first_found: bool = False):
         moves = np.zeros((N ** 2, 2), dtype=np.int8)
         moves_idx = 0
         for d in DIR:
@@ -502,29 +533,37 @@ class FastBoard:
                     break
         return moves[:moves_idx]
 
-    def possible_moves(self, from_pos, ignore_pos=None, return_first_found=False, cache=True):
-        if cache:
-            cache_key = from_pos, ignore_pos
-            if self._cached_moves.get((cache_key), False):
-                return self._cached_moves[cache_key]
-        moves = []
-        for dx, dy in self.DIRECTIONS:
-            i, j = from_pos
-            while True:
-                i += dy
-                j += dx
-                if not (0 <= i < self.N and 0 <= j < self.N):
-                    break
-                if (i, j) == ignore_pos or self.empty_cells[i, j]:
-                    moves.append((i, j))
-                    if return_first_found:
-                        return moves
-                else:
-                    break
-        if cache:
-            self._cached_moves[cache_key] = tuple(moves)
-        return moves
+    # def possible_moves(self, from_pos, ignore_pos=None, return_first_found=False, cache=True):
+    #     if cache:
+    #         cache_key = from_pos, ignore_pos
+    #         if self._cached_moves.get(cache_key, False):
+    #             return self._cached_moves[cache_key]
+    #     moves = []
+    #     for dx, dy in self.DIRECTIONS:
+    #         i, j = from_pos
+    #         while True:
+    #             i += dy
+    #             j += dx
+    #             if not (0 <= i < self.N and 0 <= j < self.N):
+    #                 break
+    #             if (i, j) == ignore_pos or self.empty_cells[i, j]:
+    #                 moves.append((i, j))
+    #                 if return_first_found:
+    #                     return moves
+    #             else:
+    #                 break
+    #     if cache:
+    #         self._cached_moves[cache_key] = tuple(moves)
+    #     return moves
 
+    # def possible_actions_numba(self, player, return_first_found=False):
+    #     if self._cached_actions[player] is not None:
+    #         return self._cached_actions[player]
+    #
+    #     actions
+
+    # def _possible_actions_numba(self, player, return_first_found=False):
+    #     pass
 
     def possible_actions(self, player, return_first_found=False):
         if self._cached_actions[player] is not None:
@@ -532,15 +571,22 @@ class FastBoard:
 
         actions = []
         for queen in self.queens[player]:
-            for queen_move in self.possible_moves(queen):
-                for arr_move in self.possible_moves(queen_move, ignore_pos=queen,
-                                                    return_first_found=return_first_found):
+            for queen_move in self.possible_moves_numba(queen):
+                for arr_move in self.possible_moves_numba(queen_move, ignore_pos=queen,
+                                                          return_first_found=return_first_found):
                     res = (queen, queen_move, arr_move)
                     if return_first_found:
                         return res
                     actions.append(res)
         self._cached_actions[player] = actions
         return actions
+
+
+class GameStage(Enum):
+    Opening = 0  # première phase de jeu
+    MiddleGame = 1  # commence lorsque 25% du plateau est rempli
+    EndGame = 2  # commence lorsque chaque carré ne peut être atteint que par un seul joueur
+
 
 if __name__ == "__main__":
     from src.models.board import Board

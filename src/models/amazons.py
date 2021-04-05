@@ -65,7 +65,7 @@ class Amazons:
             path (str): chemin vers le fichier représentant le plateau
         """
         self.board = Board(*read_file(path))
-        self.players = (HumanPlayer(self.board, PLAYER_1), AIPlayer(self.board, PLAYER_2))
+        self.players = (HumanPlayer(self.board, PLAYER_1), HumanPlayer(self.board, PLAYER_2))
         self.current_player_idx = 0
         self.status = None
         self.ai_ai_delay = ai_ai_delay

@@ -86,6 +86,16 @@ class Board:
         for array in self.queens:
             for pos in array:
                 yield pos
+
+    @property
+    def arrows(self):
+        return [
+            Pos2D(row_idx, col_idx)
+            for row_idx, row in enumerate(self.grid.grid)
+            for col_idx, tile in enumerate(row)
+            if tile == ARROW
+        ]
+
     @property
     def nb_queens(self):
         """

@@ -62,3 +62,5 @@ APP_ICON = join(ICONS_DIR, 'app_icon.svg')
 
 QUEENS_ICONS_FILENAMES = ('bq.png', 'wq.png')
 QUEEN_ICONS = [join(ICONS_DIR, filename) for filename in QUEENS_ICONS_FILENAMES]
+
+ARROW_ICON = join(ICONS_DIR, 'arrow.png')

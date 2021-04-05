@@ -1,7 +1,7 @@
 from PyQt5.QtWidgets import QWidget, QFormLayout, QSlider, QComboBox, QPushButton, QFileDialog, QLabel, QMessageBox, \
     QSizePolicy, QSpacerItem
 from PyQt5.QtCore import Qt, pyqtSlot
-import src.views.strings as strings
+import src.views.const_strings as strings
 from src.const import BOARDS_DIR, AI_AI_DELAY_MINMAX, AI_AI_DELAY_DEFAULT
 from os import path
 
@@ -278,7 +278,6 @@ class NewGameSettings(QWidget):
 
 
 class NewGameSettingsDelegate:
-
     def is_board_file_valid(self, file_path) -> bool:
         raise NotImplemented
 

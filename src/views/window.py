@@ -1,12 +1,12 @@
 from PyQt5.QtWidgets import QVBoxLayout, QHBoxLayout, QPushButton, QWidget, QSizePolicy
 from src.views.board_view import BoardView
-from src.views import strings
+from src.views import const_strings
 
 
 class MainWindow(QWidget):
     def __init__(self, board_view: BoardView):
         super().__init__()
-        self.setWindowTitle(strings.APP_NAME)
+        self.setWindowTitle(const_strings.APP_NAME)
 
         self.board_view = board_view
         self.board_section_widget = QWidget()
@@ -20,7 +20,7 @@ class MainWindow(QWidget):
 
         self.setup_board_section()
 
-        self.layout().addWidget(QPushButton(strings.START_GAME))
+        self.layout().addWidget(QPushButton(const_strings.START_GAME))
 
     def setup_board_section(self):
 

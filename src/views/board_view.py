@@ -4,11 +4,10 @@ from PyQt5.QtGui import QResizeEvent
 from src.views.board_scene import BoardScene, BoardSceneDelegate
 from src.const import MIN_TILE_SIZE
 
-
 class BoardView(QtWidgets.QGraphicsView, BoardSceneDelegate):
 
-    def __init__(self, delegate, n, parent, pieces, *args, **kwargs):
-        self.board_scene = BoardScene(delegate, self, n, parent)
+    def __init__(self, delegate, n, parent, pieces, arrows, *args, **kwargs):
+        self.board_scene = BoardScene(self, delegate, n, parent)
         super().__init__(self.board_scene, *args, **kwargs)
 
         self.setAlignment(Qt.AlignLeft | Qt.AlignTop)
@@ -17,6 +16,7 @@ class BoardView(QtWidgets.QGraphicsView, BoardSceneDelegate):
         self.n = n
 
         self.board_scene.add_pieces(pieces)
+        self.board_scene.add_arrows(arrows)
         self.board_scene.redraw(n, self.rect())
 
         self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)

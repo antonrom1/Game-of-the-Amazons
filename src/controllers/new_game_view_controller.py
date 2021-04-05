@@ -1,8 +1,11 @@
 from src.models.amazons import Amazons
 from src.views import new_game_settings
 from src.const import PLAYERS, AI_AI_DELAY_DEFAULT
-from src.models.players import HumanPlayer, AIPlayer
-from src.views.strings import HUMAN_PLAYER, AI_PLAYER
+from src.models.players import AIPlayer
+from src.controllers.game_view_controller import HumanGuiPlayer, AIGuiPlayer
+from src.views.const_strings import HUMAN_PLAYER, AI_PLAYER
+from abc import ABC, abstractmethod
+
 
 class NewGameViewController(new_game_settings.NewGameSettingsDelegate):
     def __init__(self, delegate):
@@ -24,15 +27,16 @@ class NewGameViewController(new_game_settings.NewGameSettingsDelegate):
     def save_settings(self, file_path, players_str, ai_ai_delay) -> bool:
         try:
             self.game = Amazons(file_path, self.ai_ai_delay)
-        except Exception as e:
+        except Exception:
+            # le fichier plateau n'est pas correctement défini
             return False
         else:
             players = []
             for i, player_str in enumerate(players_str):
                 if player_str == HUMAN_PLAYER:
-                    cls = HumanPlayer
+                    cls = HumanGuiPlayer
                 elif player_str == AI_PLAYER:
-                    cls = AIPlayer
+                    cls = AIGuiPlayer
                 else:
                     raise ValueError("players_str ne correspondent pas aux types de joueurs définis")
                 player = cls(self.game.board, PLAYERS[i])
@@ -42,6 +46,7 @@ class NewGameViewController(new_game_settings.NewGameSettingsDelegate):
             return True
 
 
-class NewGameViewControllerDelegate:
+class NewGameViewControllerDelegate(ABC):
+    @abstractmethod
     def new_game_created(self, game: Amazons):
-        raise NotImplemented
+        pass

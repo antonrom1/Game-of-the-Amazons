@@ -1,15 +1,15 @@
-from PyQt5.QtWidgets import QGraphicsScene, QGraphicsItem, QGraphicsSceneMouseEvent, QGraphicsObject
-from PyQt5.QtCore import QPointF, Qt, QRectF, QPropertyAnimation, QEasingCurve, QVariantAnimation
-from PyQt5.QtGui import QPixmap, QBrush, QColor, QPen, QColorConstants
-
-from src.const import QUEEN_ICONS, PLAYERS, ARROW_ICON, ARROW
+from PyQt5.QtWidgets import QGraphicsScene, QGraphicsItem, QGraphicsSceneMouseEvent, QGraphicsObject, QGraphicsEllipseItem
+from PyQt5.QtCore import QPointF, Qt, QRectF, QPropertyAnimation, QEasingCurve
+from PyQt5.QtGui import QPixmap, QBrush, QPen, QColor
+from src.views.sound import AmazonsSound
+from src.const import QUEEN_ICONS, PLAYERS, ARROW_ICON, REACHABLE_INDICATOR_SIZE_TO_TILE_SIZE_RATIO
 import math
 
 
 class BoardScene(QGraphicsScene):
     MOVE_TO_COLOR = QColor(200, 244, 100)
-    POSSIBLE_MOVE_INDICATOR_COLOR = QColorConstants.White
-    POSSIBLE_MOVE_INDICATOR_COLOR_HIGHLIGHTED = QColorConstants.Red
+    POSSIBLE_MOVE_INDICATOR_COLOR = QColor(255, 255, 255)
+    POSSIBLE_MOVE_INDICATOR_COLOR_HIGHLIGHTED = QColor(255, 150, 100)
     ARROW_SIZE_TO_TILE_SIZE_RATIO = 0.4
 
     def __init__(self, scene_delegate, board_delegate, n, *args, **kwargs):
@@ -51,6 +51,20 @@ class BoardScene(QGraphicsScene):
         self.selectionChanged.connect(self.selection_changed)
         self._draw()
 
+    def cleanup_board(self):
+        self.tiles_graphics_items = {}
+
+        self.possible_moves = []
+        self.possible_move_indicators_items = {}
+
+        self.pieces = {}
+        self.pieces_graphics_items = {}
+
+        self.arrows = []
+        self.arrows_graphics_items = {}
+
+        self.ongoing_action = []
+
     def _draw(self):
         pen = QPen(Qt.transparent)
 
@@ -91,6 +105,8 @@ class BoardScene(QGraphicsScene):
             piece_rect = self.get_tile_rect(*piece_pos)
             piece.setPos(piece_rect.x(), piece_rect.y())
             piece.setPixmap(pixmaps[self.pieces[piece_pos]])
+        for pos, indic in self.possible_move_indicators_items.items():
+            indic.setRect(self.get_reachable_tile_indicator_size(pos))
 
         for arr_pos, arr in self.arrows_graphics_items.items():
             arr.setRect(self.get_arrow_rect(*arr_pos))
@@ -170,6 +186,8 @@ class BoardScene(QGraphicsScene):
 
     def add_arrows(self, arrows):
         self.arrows += arrows
+
+        # flags are saved to make sure that queens that were selectable will still be selectable after the redraw
         temp_flags = {pos: item.flags() for pos, item in self.pieces_graphics_items.items()}
 
         self.redraw_pieces()
@@ -262,13 +280,15 @@ class BoardScene(QGraphicsScene):
         # changer de couleur de toutes les cases qui sont atteignables par la reine
         for tile_pos in self.possible_moves:
             brush = QBrush(self.POSSIBLE_MOVE_INDICATOR_COLOR)
-            tile_rect = self.tiles_graphics_items[tile_pos].sceneBoundingRect()
-
-            center = tile_rect.center()
-            tile_rect.setSize(tile_rect.size() / 5)
-            tile_rect.moveCenter(center)
-            ellipse = self.addEllipse(tile_rect, brush=brush)
+            ellipse = self.addEllipse(self.get_reachable_tile_indicator_size(tile_pos), brush=brush)
             self.possible_move_indicators_items[tile_pos] = ellipse
+
+    def get_reachable_tile_indicator_size(self, pos):
+        tile_rect = self.tiles_graphics_items[pos].sceneBoundingRect()
+        center = tile_rect.center()
+        tile_rect.setSize(tile_rect.size() * REACHABLE_INDICATOR_SIZE_TO_TILE_SIZE_RATIO)
+        tile_rect.moveCenter(center)
+        return tile_rect
 
     def selection_changed(self):
         selected = self.selectedItems()
@@ -310,6 +330,7 @@ class BoardScene(QGraphicsScene):
 
         assert isinstance(arrow, QGraphicsItem)
         self.can_shoot_arrow = False
+        AmazonsSound.shared.play_arrow_sfx()
         PieceMoveAnimation(arrow, to_point, easing_curve=QEasingCurve.InBack, finished=self.hide_shot_arrow)
 
     def hide_shot_arrow(self):
@@ -330,8 +351,15 @@ class BoardScene(QGraphicsScene):
 
         to_point = self.get_tile_rect(*to_pos).topLeft()
         self.moving_queen = piece_item
-
         self.pieces[to_pos] = self.pieces.pop(from_pos)
+        # try:
+        #     self.pieces[to_pos] = self.pieces.pop(from_pos)
+        # except KeyError:
+        #     self.moving_queen = None
+        #     self.pieces_graphics_items[from_pos] = self.pieces_graphics_items.pop(to_pos)
+        #     self.ongoing_action = []
+        #     return
+        AmazonsSound.shared.play_piece_move_sfx()
         PieceMoveAnimation(piece_item, to_point, finished=self.animate_action_arrow)
 
     def animate_action_arrow(self):
@@ -361,6 +389,8 @@ class BoardScene(QGraphicsScene):
             self.ongoing_action.append(to_pos)
 
         self.pieces[to_pos] = self.pieces.pop(from_pos)
+
+        AmazonsSound.shared.play_piece_move_sfx()
 
         PieceMoveAnimation(piece_item, to_point, finished=None if undoing else self.handle_end_queen_move_animation)
 

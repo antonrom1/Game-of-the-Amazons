@@ -33,7 +33,10 @@ class BoardView(QtWidgets.QGraphicsView, BoardSceneDelegate):
     def resizeEvent(self, event: QResizeEvent) -> None:
         super().resizeEvent(event)
         self.board_scene.resize(self.rect())
-        # self.board_scene.redraw(self.n, self.rect())
 
     def change_cursor(self, cursor):
         self.setCursor(cursor)
+
+    def scrollContentsBy(self, dx: int, dy: int) -> None:
+        # il ne faut pas que l'utilisateur puisse déplacer le plateau...
+        pass

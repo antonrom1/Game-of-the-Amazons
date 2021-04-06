@@ -30,6 +30,8 @@ SAVE = "Commencer"
 # GAME
 
 START_GAME = "Commencer à jouer"
-RESTART_GAME = "Recommencer"
+RESTART_GAME = "Réinitialiser la partie"
+
+PLAYER_WON_MESS = "Le joueur {} a gagné"
 
 

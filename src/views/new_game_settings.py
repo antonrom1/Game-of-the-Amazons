@@ -1,15 +1,14 @@
-from PyQt5.QtWidgets import QWidget, QFormLayout, QSlider, QComboBox, QPushButton, QFileDialog, QLabel, QMessageBox, \
-    QSizePolicy, QSpacerItem
-from PyQt5.QtCore import Qt, pyqtSlot
-import src.views.const_strings as strings
-from src.const import BOARDS_DIR, AI_AI_DELAY_MINMAX, AI_AI_DELAY_DEFAULT
+from PyQt5.QtWidgets import QWidget, QFormLayout, QSlider, QComboBox, QPushButton, QFileDialog, QLabel, QMessageBox
+from PyQt5.QtCore import Qt
+from src.views import const_strings
+from src.const import BOARDS_DIR, AI_AI_DELAY_MINMAX_MILLIS, AI_AI_DELAY_DEFAULT_MILLIS
 from os import path
 
 
 class NewGameSettings(QWidget):
     VERTICAL_SPACING = 15
 
-    def __init__(self, delegate, player_ids, ai_ai_delay=AI_AI_DELAY_DEFAULT, curr_file_path=strings.NO_FILE):
+    def __init__(self, delegate, player_ids, ai_ai_delay=AI_AI_DELAY_DEFAULT_MILLIS, curr_file_path=const_strings.NO_FILE):
         super().__init__()
         self.player_ids = player_ids
 
@@ -30,7 +29,7 @@ class NewGameSettings(QWidget):
         # AI timer row
         self.ai_ai_delay = ai_ai_delay
         self.ai_ai_slider = QSlider(Qt.Horizontal)
-        self.ai_ai_delay_form_row = strings.AI_DELAY, self.ai_ai_slider
+        self.ai_ai_delay_form_row = const_strings.AI_DELAY, self.ai_ai_slider
 
         # Save cancel
         self.save_button = None
@@ -64,7 +63,7 @@ class NewGameSettings(QWidget):
 
     def setup_window(self):
         """Configure la fenêtre"""
-        self.setWindowTitle(strings.SETTINGS)
+        self.setWindowTitle(const_strings.SETTINGS)
 
     ####
     # LAYOUT
@@ -91,9 +90,9 @@ class NewGameSettings(QWidget):
 
     def setup_player_type_selection(self):
         """Crée les deux premières lignes du formulaire pour pouvoir choisir le type de joueur (i.e.: IA, Humain)"""
-        for player in [f"{strings.PLAYER} {player}" for player in self.player_ids]:
+        for player in [f"{const_strings.PLAYER} {player}" for player in self.player_ids]:
             player_selection = QComboBox()
-            player_selection.addItems(strings.PLAYER_TYPES_LIST)
+            player_selection.addItems(const_strings.PLAYER_TYPES_LIST)
             player_selection.activated.connect(self.update_delay_slider_visibility)
 
             self.settings_form.addRow(str(player), player_selection)
@@ -105,7 +104,7 @@ class NewGameSettings(QWidget):
     ####
 
     def setup_ai_ai_slider(self):
-        min_delay, max_delay = AI_AI_DELAY_MINMAX
+        min_delay, max_delay = AI_AI_DELAY_MINMAX_MILLIS
 
         self.ai_ai_slider.setMinimum(min_delay)
         self.ai_ai_slider.setMaximum(max_delay)
@@ -116,7 +115,7 @@ class NewGameSettings(QWidget):
 
     @property
     def is_mode_ai_ai(self):
-        return all(combo.currentText() == strings.AI_PLAYER for combo in self.player_combos.values())
+        return all(combo.currentText() == const_strings.AI_PLAYER for combo in self.player_combos.values())
 
     @property
     def slider_row_index(self):
@@ -160,7 +159,7 @@ class NewGameSettings(QWidget):
 
     @property
     def is_file_defined(self):
-        return self.curr_file_status_label.text() != strings.NO_FILE
+        return self.curr_file_status_label.text() != const_strings.NO_FILE
 
     def setup_load_game_row(self):
         """Configure la ligne du formulaire avec le bouton pour charger un fichier un plateau"""
@@ -169,7 +168,7 @@ class NewGameSettings(QWidget):
 
         self.load_file_button.clicked.connect(self.handle_load_file)
 
-        self.remove_board_button.setText(strings.REMOVE)
+        self.remove_board_button.setText(const_strings.REMOVE)
         self.remove_board_button.clicked.connect(self.handle_delete_file)
 
         self.update_load_file_button_label()
@@ -186,9 +185,9 @@ class NewGameSettings(QWidget):
         et à ``LOAD_ANOTHER_FILE`` sinon
         """
         if self.is_file_defined:
-            butt_label_text = strings.LOAD_ANOTHER_FILE
+            butt_label_text = const_strings.LOAD_ANOTHER_FILE
         else:
-            butt_label_text = strings.LOAD_FILE
+            butt_label_text = const_strings.LOAD_FILE
         self.load_file_button.setText(butt_label_text)
 
     def handle_load_file(self):
@@ -197,14 +196,14 @@ class NewGameSettings(QWidget):
         externe: file_checker
         Met à jour le label avec le nom du fichier si le fichier est correct
         """
-        file_path, _ = QFileDialog.getOpenFileName(self, strings.LOAD_FILE, BOARDS_DIR,
-                                                   strings.BOARD_FILE_EXTENSION)
+        file_path, _ = QFileDialog.getOpenFileName(self, const_strings.LOAD_FILE, BOARDS_DIR,
+                                                   const_strings.BOARD_FILE_EXTENSION)
 
         if file_path.strip():  # ignorer le cas où l'utilisateur clique sur cancel
             if not self.delegate.is_board_file_valid(file_path):
                 # fichier non valide
                 # prévenir l'utilisateur que le fichier n'est pas correct
-                self._warn(strings.INCORRECT_FILE)
+                self._warn(const_strings.INCORRECT_FILE)
             else:  # fichier valide
                 self.board_file_path = file_path
 
@@ -217,7 +216,7 @@ class NewGameSettings(QWidget):
 
 
     def handle_delete_file(self):
-        self.curr_file_status_label.setText(strings.NO_FILE)
+        self.curr_file_status_label.setText(const_strings.NO_FILE)
         self.disable_enable_buttons()
         self.update_load_file_button_label()
 
@@ -228,9 +227,9 @@ class NewGameSettings(QWidget):
     ####
 
     def setup_save_cancel_buttons(self):
-        self.save_button = QPushButton(strings.SAVE)
+        self.save_button = QPushButton(const_strings.SAVE)
         self.save_button.setDefault(True)
-        cancel_button = QPushButton(strings.CANCEL)
+        cancel_button = QPushButton(const_strings.CANCEL)
 
         cancel_button.clicked.connect(self.handle_cancel)
         self.save_button.clicked.connect(self.handle_save)
@@ -244,13 +243,13 @@ class NewGameSettings(QWidget):
         self.settings_form.addRow('', QLabel())
 
     def handle_save(self):
-        if self.board_file_path != strings.NO_FILE:
+        if self.board_file_path != const_strings.NO_FILE:
             board = path.abspath(self.board_file_path)
         else:
             board = None
 
         if self.is_mode_ai_ai:
-            delay = self.ai_ai_delay
+            delay = self.ai_ai_delay / 1000  # pour avoir des secondes, et pas des millisecondes
         else:
             delay = None
 
@@ -261,7 +260,7 @@ class NewGameSettings(QWidget):
         if succ:
             self.close()
         else:
-            self._warn(strings.SAVE_SETTINGS_ERROR)
+            self._warn(const_strings.SAVE_SETTINGS_ERROR)
 
     ####
     # WARNING
@@ -271,7 +270,6 @@ class NewGameSettings(QWidget):
     def _warn(mess, buttons=QMessageBox.Ok):
         warning_box = QMessageBox()
         warning_box.setIcon(QMessageBox.Warning)
-        warning_box.setText(strings.ERROR)
         warning_box.setText(mess)
         warning_box.setStandardButtons(buttons)
         warning_box.exec()

@@ -17,8 +17,8 @@ WIN = 100000
 DRAW = 0
 # LOSS = -WIN
 
-AI_AI_DELAY_MINMAX = (500, 2000)
-AI_AI_DELAY_DEFAULT = 1500
+AI_AI_DELAY_MINMAX = (2000, 10000)
+AI_AI_DELAY_DEFAULT = 2500
 
 NORTH =      (1, 0)
 NORTH_EAST = (1, 1)
@@ -46,6 +46,8 @@ MESSAGE_COUP = "Joueur {}, donnez un coup de format 'position reine avant > posi
 # GUI
 ###############
 
+XDG_RUNTIME_DIR_ENVIRON = {'XDG_RUNTIME_DIR' : '/tmp/runtime-root'}
+
 # BOARD
 DEFAULT_TILE_COLORS = ["af3232", "ffd7c8"]
 MIN_TILE_SIZE = 25
@@ -53,14 +55,27 @@ MIN_TILE_SIZE = 25
 # ASSETS
 
 # Pour que les Unix-like (MacOS, Linux) et Windows soient compatibles
-RESSOURCES_DIR = join('ressources')
+RESSOURCES_DIR = join('./ressources')
 ASSETS_DIR = join(RESSOURCES_DIR, 'assets')
 ICONS_DIR = join(ASSETS_DIR, 'icons')
 BOARDS_DIR = join(RESSOURCES_DIR, 'boards')
 
 APP_ICON = join(ICONS_DIR, 'app_icon.svg')
 
-QUEENS_ICONS_FILENAMES = ('bq.png', 'wq.png')
+QUEENS_ICONS_FILENAMES = 'wq.png', 'bq.png'
 QUEEN_ICONS = [join(ICONS_DIR, filename) for filename in QUEENS_ICONS_FILENAMES]
 
 ARROW_ICON = join(ICONS_DIR, 'arrow.png')
+
+MUSIC_ICON = join(ICONS_DIR, 'music-note.png')
+NO_MUSIC_ICON = join(ICONS_DIR, 'no-music-note.png')
+
+
+SOUND_DIR = join(ASSETS_DIR, 'sounds')
+
+ARROW_SFX = join(SOUND_DIR, 'arrow.wav')
+PIECE_SLIDE_SFX = join(SOUND_DIR, 'piece_slide.wav')
+RICKROLL = join(SOUND_DIR, 'Rick Astley - Never Gonna Give You Up (Video).wav')
+SOUNDTRACK = join(SOUND_DIR, 'Richard Wagner - Ride Of The Valkyries.wav')
+
+REACHABLE_INDICATOR_SIZE_TO_TILE_SIZE_RATIO = 0.2

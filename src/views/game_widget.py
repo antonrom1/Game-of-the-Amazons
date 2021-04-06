@@ -2,7 +2,6 @@ from PyQt5.QtWidgets import QVBoxLayout, QHBoxLayout, QPushButton, QWidget, QSiz
 from src.views.board_view import BoardView
 from src.views import const_strings
 from src.views.sound import AmazonsSound, AmazonsSoundDelegate
-from PyQt5.QtGui import QIcon
 from src.views.toggle_image_button import ToggleImageButton
 from src.const import NO_MUSIC_ICON, MUSIC_ICON
 

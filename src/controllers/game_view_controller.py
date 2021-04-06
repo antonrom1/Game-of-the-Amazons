@@ -3,7 +3,7 @@ from src.controllers.player_ui import GuiPlayerDelegate, HumanGuiPlayer
 from src.models.amazons import Amazons, AmazonsDelegate
 from src.views.board_view import BoardView
 from src.views.board_scene import BoardDelegate
-from src.views.window import GameWidget, GameWidgetDelegate
+from src.views.game_widget import GameWidget, GameWidgetDelegate
 from src.controllers.point_pos_bridge import to_ui_coord, action_to_game_coords
 from src.controllers.main_thread_executor import MainThreadExecutor
 from copy import deepcopy

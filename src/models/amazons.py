@@ -59,7 +59,7 @@ class Amazons:
         current_player_idx (int): indice du joueur dont c'est le tour
         status (EndOfGameStatus): état de la fin de partie
     """
-    def __init__(self, path, ai_ai_delay=AI_AI_DELAY_DEFAULT):
+    def __init__(self, path, delegate=None, show_text_board=True):
         """
         Args:
             path (str): chemin vers le fichier représentant le plateau
@@ -68,7 +68,11 @@ class Amazons:
         self.players = (HumanPlayer(self.board, PLAYER_1), HumanPlayer(self.board, PLAYER_2))
         self.current_player_idx = 0
         self.status = None
-        self.ai_ai_delay = ai_ai_delay
+
+        self.delegate = delegate
+        self.show_text_board = show_text_board
+
+        self.should_stop_execution = False
 
         self.turn_count = 0
 
@@ -76,16 +80,29 @@ class Amazons:
         """
         Joue une partie du jeu des amazones
         """
-        while not self.is_over():
-            print(self.board)  # on affiche l'état actuel du plateau
+        while not (self.is_over() or self.should_stop_execution):
+            try:
+                self.delegate.player_changed(self.current_player_idx)
+            except AttributeError:
+                pass
+
+            if self.show_text_board:
+                print(self.board)  # on affiche l'état actuel du plateau
             # Le joueur actuel joue son coup
             self.players[self.current_player_idx].play()
             # On passe au joueur suivant
             self.current_player_idx = 1-self.current_player_idx
 
             self.turn_count += 1
-        print(self.board)  # On affiche le plateau après le dernier coup
-        self.show_winner()  # On montre qui a gagné
+
+        if not self.should_stop_execution:
+            try:
+                self.delegate.game_ended(self.status.winner)
+            except AttributeError:
+                pass
+            if self.show_text_board:
+                print(self.board)  # On affiche le plateau après le dernier coup
+                self.show_winner()  # On montre qui a gagné
 
     def is_over(self):
         """
@@ -100,3 +117,11 @@ class Amazons:
     def show_winner(self):
         winner = '1' if self.status.winner == PLAYER_1 else '2'
         print(f'Player {winner} won: {self.status.winner_score} vs {self.status.loser_score}!')
+
+
+class AmazonsDelegate:
+    def player_changed(self, new_player):
+        raise NotImplemented
+
+    def game_ended(self, winner):
+        raise NotImplemented

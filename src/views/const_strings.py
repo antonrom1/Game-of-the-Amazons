@@ -26,7 +26,7 @@ ERROR = "Erreur"
 INCORRECT_FILE = "Fichier incorrectement défini"
 SAVE_SETTINGS_ERROR = "Une erreur est survenue lors de la sauvegarde des nouveaux paramètres."
 
-CANCEL = "Annuler"
+CANCEL = "Arrêter"
 SAVE = "Commencer"
 
 

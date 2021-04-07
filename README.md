@@ -5,3 +5,8 @@ Implémentation du [Jeu des Amazones](https://en.wikipedia.org/wiki/Game_of_the_
     $ python3 partie4.py
 
 Les binaires de FastBoard peuvent ne pas être compatible avec votre système ou votre version de Python. Ils seront alors automatiquement compilés avec [Numba](https://numba.pydata.org)
+
+## Important
+ Pour le tournoi, tournoi_numba_aot doit également être importé
+ 
+ Celui-ci contient les binaires pour l'IA

@@ -1,9 +1,7 @@
 import time
 import numba
-import random
 import numpy as np
 from functools import lru_cache
-from abc import ABCMeta, abstractmethod
 
 from pos2d import Pos2D
 from action import Action

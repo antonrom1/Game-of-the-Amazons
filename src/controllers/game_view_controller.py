@@ -2,7 +2,7 @@ import threading
 from src.controllers.player_ui import GuiPlayerDelegate, HumanGuiPlayer
 from src.models.amazons import Amazons, AmazonsDelegate
 from src.views.board_view import BoardView
-from src.views.board_scene import BoardDelegate
+from src.views.board_scene import BoardSceneDelegate
 from src.views.game_widget import GameWidget, GameWidgetDelegate
 from src.controllers.point_pos_bridge import to_ui_coord, action_to_game_coords
 from src.controllers.main_thread_executor import MainThreadExecutor
@@ -10,7 +10,10 @@ from src.const import QUEEN_ICONS
 from copy import deepcopy
 
 
-class GameViewController(BoardDelegate, GuiPlayerDelegate, AmazonsDelegate, GameWidgetDelegate):
+class GameViewController(BoardSceneDelegate, GuiPlayerDelegate, AmazonsDelegate, GameWidgetDelegate):
+    """
+    Gère le lien entre le jeu et l'interface du jeu
+    """
     def __init__(self, game: Amazons):
         self.game = game
         self.original_game = deepcopy(self.game)  # to make it possible for the user to restart the game later on
@@ -26,6 +29,7 @@ class GameViewController(BoardDelegate, GuiPlayerDelegate, AmazonsDelegate, Game
         self.window.restart_game_btn.setDisabled(True)
 
     def init_game(self):
+        """Initialise la partie logique du jeu (model)"""
         self.game.delegate = self
         for player in self.game.players:
             player.delegate = self
@@ -37,16 +41,18 @@ class GameViewController(BoardDelegate, GuiPlayerDelegate, AmazonsDelegate, Game
             game_logic.start()
 
     def init_ui(self):
+        """Initialise l'interface graphique du jeu"""
         self.init_board_view()
         self.window = GameWidget(self.board_view, self)
 
     def init_board_view(self):
-
+        """Initialise le BoardView"""
         self.board_view = BoardView(self.game.players[self.game.current_player_idx],
                                     self.game.board.size,
                                     self.window, *self.get_pieces_and_arrows_ui_pos())
 
     def get_pieces_and_arrows_ui_pos(self):
+        """Renvoie les positions des flèches et reines du jeu en position de l'interface graphique"""
         pieces = {}
         for queen, positions in enumerate(self.game.board.queens):
             pieces.update({to_ui_coord(self.game.board.size, pos): queen for pos in positions})
@@ -55,11 +61,11 @@ class GameViewController(BoardDelegate, GuiPlayerDelegate, AmazonsDelegate, Game
 
         return pieces, arrows
 
-    def update_view_from_model_data(self):
-        self.board_view.board_scene.pieces, self.board_view.board_scene.arrows = self.get_pieces_and_arrows_ui_pos()
-        self.board_view.board_scene.redraw_pieces()
-
     def game_over(self):
+        """
+        Interdit toute interaction avec le plateau et appelle la méthode GameWidget pour afficher
+        le message de fin de jeu
+        """
         if self.game.board.status.over:
             MainThreadExecutor.shared.run(self.board_view.board_scene.stop_all_possible_interaction)
             MainThreadExecutor.shared.run(self.window.exhibit_game_over, self.game.board.status.winner)
@@ -68,6 +74,7 @@ class GameViewController(BoardDelegate, GuiPlayerDelegate, AmazonsDelegate, Game
     # GuiPlayerDelegate protocol
 
     def played(self, action=None):
+        """méthode de GuiPlayerDelegate qui est appelée par GuiPlayer lorsque celui-ci a joué"""
         if not self.window.will_unload:
             if action is not None:
                 bd_scene = self.board_view.board_scene
@@ -77,6 +84,7 @@ class GameViewController(BoardDelegate, GuiPlayerDelegate, AmazonsDelegate, Game
     # AmazonsDelegate protocol
 
     def player_changed(self, new_player_id):
+        """méthode de AmazonsDelegate qui est appelée par Amazons lorsque le tour du joueur précédent est terminé"""
         if not self.window.will_unload:
             self.window.update_current_turn_indicator(QUEEN_ICONS[new_player_id])
             new_player = self.game.players[new_player_id]
@@ -86,21 +94,34 @@ class GameViewController(BoardDelegate, GuiPlayerDelegate, AmazonsDelegate, Game
             MainThreadExecutor.shared.run(self.window.restart_game_btn.setDisabled, False)
 
     def game_ended(self, winner):
+        """méthode de AmazonsDelegate qui est appelée par Amazons lorsque le jeu est fini"""
         if not self.window.will_unload:
-            MainThreadExecutor.shared.run(self.board_view.board_scene.stop_all_possible_interaction)
-            MainThreadExecutor.shared.run(self.window.exhibit_game_over, winner)
+            self.game_over()
 
     # GameWidgetDelegate protocol
 
     def view_will_unload(self):
+        """
+        méthode de GameWidgetDelegate qui est appelée par GameWidget lorsque celui-ci est sur le
+        point d'être fermé
+        La liste de tâche à exécuter sur le main thread est alors vidée
+        """
         MainThreadExecutor.shared.main_thread_functions = []
 
     def restart_game(self):
+        """
+        méthode de GameWidgetDelegate qui est appelée par GameWidget lorsque le jeu doit être recommencé
+        la sauvegarde de game est alors remise dans self.game et le jeu reprend depuis le début
+        """
         if not self.window.will_unload:
             # Stop thread execution
             self.game.should_stop_execution = True
             for player in self.game.players:
                 player.should_stop_execution = True
+                try:
+                    player.delegate = None
+                except Exception:
+                    pass
 
             # copy the original game state
             self.game = deepcopy(self.original_game)

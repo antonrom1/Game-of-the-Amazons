@@ -5,6 +5,7 @@ from src.views.const_strings import APP_NAME
 
 
 class AmazkombatApp(QApplication):
+    """L'application de Amazkombat"""
     def __init__(self):
         super().__init__([APP_NAME])
         self.setApplicationName(APP_NAME)

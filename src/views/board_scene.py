@@ -7,6 +7,8 @@ import math
 
 
 class BoardScene(QGraphicsScene):
+    """QGraphicsScene d'un plateau"""
+
     MOVE_TO_COLOR = QColor(200, 244, 100)
     POSSIBLE_MOVE_INDICATOR_COLOR = QColor(255, 255, 255)
     POSSIBLE_MOVE_INDICATOR_COLOR_HIGHLIGHTED = QColor(255, 150, 100)
@@ -53,6 +55,7 @@ class BoardScene(QGraphicsScene):
         self._draw()
 
     def cleanup_board(self):
+        """Nettoie le plateau de toutes les données"""
         self.tiles_graphics_items = {}
 
         self.possible_moves = []
@@ -67,6 +70,7 @@ class BoardScene(QGraphicsScene):
         self.ongoing_action = []
 
     def _draw(self):
+        """Dessine toutes les cases du plateau"""
         pen = QPen(Qt.transparent)
 
         for i in range(self.n):
@@ -78,6 +82,7 @@ class BoardScene(QGraphicsScene):
         self.draw_pieces()
 
     def get_tile_rect(self, i, j):
+        """Renvoie le rectangle de la case i, j du plateau"""
         return QRectF(
             self.top_right_point.x() + j * self.tile_pixel_size,
             self.top_right_point.y() + i * self.tile_pixel_size,
@@ -86,16 +91,19 @@ class BoardScene(QGraphicsScene):
         )
 
     def allow_pieces_interaction(self, player):
+        """Authorise les interactions de l'utilisateur avec le plateau (e.g.: sélectionner une pièce)"""
         self.listen_mouse_click_events = True
         for piece_pos, piece_graphical_item in self.pieces_graphics_items.items():
             piece_graphical_item.setFlag(QGraphicsItem.ItemIsSelectable, self.pieces[piece_pos] == player)
 
     def stop_all_possible_interaction(self):
+        """Arrête toute interaction possible de l'utilisateur avec le plateau"""
         self.listen_mouse_click_events = False
         for piece_player, piece_graphical_item in self.pieces_graphics_items.items():
             piece_graphical_item.setFlag(QGraphicsItem.ItemIsSelectable, False)
 
     def resize(self, rect):
+        """Change la taille du plateau à rect"""
         self.pixel_board_size = min(rect.height(), rect.width())
         self.top_right_point = rect.center() - QPointF(*(self.pixel_board_size / 2,) * 2)
 
@@ -115,6 +123,7 @@ class BoardScene(QGraphicsScene):
             arr.setRect(self.get_arrow_rect(*arr_pos))
 
     def get_scaled_pieces_pixmaps(self):
+        """Renvoie les QPixmaps redimensionnés pour la taille des cases"""
         return {player: self.get_scaled_player_pixmap(player) for player in PLAYERS}
 
     def get_scaled_player_pixmap(self, player):
@@ -125,14 +134,17 @@ class BoardScene(QGraphicsScene):
         return self.scale_pixmap_tile_size(original_pixmap)
 
     def get_arrow_rect(self, i, j):
+        """Renvoie le rectangle du cercle des flèches"""
         rect = self.get_tile_rect(i, j)
         self.rescale_at_center(rect, self.ARROW_SIZE_TO_TILE_SIZE_RATIO)
         return rect
 
     def piece_brush(self, i, j):
+        """Renvoie le pinceau de couleur approprié pour remplir la case i, j"""
         return self.tile_brushes[(i + j) % 2]
 
     def redraw_pieces(self):
+        """redessine les pièces et les flèches"""
         for pos, piece_item in list(self.pieces_graphics_items.items()) + list(self.arrows_graphics_items.items()):
             self.removeItem(piece_item)
         self.draw_pieces()
@@ -149,6 +161,7 @@ class BoardScene(QGraphicsScene):
             self.add_arrow_graphics_item(pos)
 
     def add_arrow_graphics_item(self, pos):
+        """Ajoute une flèche sous forme de cercle à la position pos"""
         pen = QPen(QColor(0, 0, 0, 255))
         brush = QBrush(QColor(0, 0, 0, 255))
 
@@ -157,6 +170,7 @@ class BoardScene(QGraphicsScene):
         self.arrows_graphics_items[pos] = arrow
 
     def scale_pixmap_tile_size(self, pixmap):
+        """Redimensionne le pixmap à la taille d'une case avec le antialiasing"""
         return pixmap.scaled(*(int(self.tile_pixel_size),) * 2,
                              transformMode=Qt.SmoothTransformation)
 
@@ -173,6 +187,7 @@ class BoardScene(QGraphicsScene):
         self.pieces_graphics_items[pos] = pixmap_item
 
     def hide_marked_tiles(self):
+        """Supprime les cases qui indiquent si les mouvements corrects du plateau"""
         if self.ongoing_action:
             # remettre les tiles à leur couleur normale
             self.prev_tile_under_mouse_pos = None
@@ -184,10 +199,12 @@ class BoardScene(QGraphicsScene):
                 self.tiles_graphics_items[tile_pos].setBrush(self.piece_brush(*tile_pos))
 
     def add_pieces(self, players):
+        """Ajoute les reines données et les dessine"""
         self.pieces.update(players)
         self.redraw_pieces()
 
     def add_arrows(self, arrows):
+        """Ajoute les flèches données et les dessine"""
         self.arrows += arrows
 
         # flags are saved to make sure that queens that were selectable will still be selectable after the redraw
@@ -201,6 +218,7 @@ class BoardScene(QGraphicsScene):
                 item.setFlags(flags)
 
     def redraw(self, n, rect):
+        """Redessine les cases du plateau"""
         self.n = n
 
         self.pixel_board_size = min(rect.height(), rect.width())
@@ -211,6 +229,7 @@ class BoardScene(QGraphicsScene):
         self._draw()
 
     def set_tile_color(self, tile_pos, color):
+        """Change de couleur d'une case du plateau"""
         tile = self.tiles_graphics_items[tile_pos]
         tile_brush = tile.brush()
         tile_brush.setColor(color)
@@ -230,6 +249,7 @@ class BoardScene(QGraphicsScene):
         return None
 
     def deselect_piece(self):
+        """Supprime les marques qui indiquent les positions possibles et désélectionne la case"""
         self.hide_marked_tiles()
         self.highlighting_reachable_tiles_under_mouse = False
         # cacher les marques qui montrent que la case est atteignable
@@ -244,6 +264,7 @@ class BoardScene(QGraphicsScene):
         self.clearSelection()
 
     def undo_action(self):
+        """Annule l'action qui est en cours"""
         if self.ongoing_action:
             self.can_shoot_arrow = False
             if len(self.ongoing_action) == 2:
@@ -256,8 +277,7 @@ class BoardScene(QGraphicsScene):
             self.highlight_reachable_tile_under_mouse(None)
 
     def select_piece(self, piece):
-        """ une reine a été sélectionnée """
-
+        """ une reine a été sélectionnée, crée les marqueurs pour les destinations possibles"""
         # coordonnée de la reine sélectionnée
         queen_coords = next(coord for coord in self.pieces_graphics_items
                                if self.pieces_graphics_items[coord] is piece)
@@ -276,13 +296,14 @@ class BoardScene(QGraphicsScene):
         self.highlight_reachable_tiles()
 
     def highlight_reachable_tiles(self):
-        # changer de couleur de toutes les cases qui sont atteignables par la reine
+        """Marque les cases qui sont atteignable par la reine"""
         for tile_pos in self.possible_moves:
             brush = QBrush(self.POSSIBLE_MOVE_INDICATOR_COLOR)
             ellipse = self.addEllipse(self.get_reachable_tile_indicator_size(tile_pos), brush=brush)
             self.possible_move_indicators_items[tile_pos] = ellipse
 
     def get_reachable_tile_indicator_size(self, pos):
+        """Renvoie le rectangle des indicateurs de destination possible à la case pos"""
         tile_rect = self.tiles_graphics_items[pos].sceneBoundingRect()
         center = tile_rect.center()
         tile_rect.setSize(tile_rect.size() * REACHABLE_INDICATOR_SIZE_TO_TILE_SIZE_RATIO)
@@ -290,6 +311,8 @@ class BoardScene(QGraphicsScene):
         return tile_rect
 
     def selection_changed(self):
+        """Lorsque une pièce a été sélectionnée, appelle select_piece, si une pièce a été désélectionnée,
+        annuler l'action en cours"""
         selected = self.selectedItems()
         if selected:
             self.select_piece(selected[0])
@@ -298,6 +321,7 @@ class BoardScene(QGraphicsScene):
                 self.undo_action()
 
     def shoot_arrow(self, to_pos, check_if_move_is_valid=True):
+        """Tire une flèche à la position to_pos"""
         arrow = self.queen_arrow_graphics_item
 
         if not isinstance(arrow, QGraphicsItem):
@@ -333,6 +357,7 @@ class BoardScene(QGraphicsScene):
         PieceMoveAnimation(arrow, to_point, easing_curve=QEasingCurve.InBack, finished=self.hide_shot_arrow)
 
     def hide_shot_arrow(self):
+        """Supprimer l'image de la flèche et la remplace par le cercle qui la représente"""
         self.removeItem(self.queen_arrow_graphics_item)
         if len(self.ongoing_action) == 3:
             self.add_arrows([self.ongoing_action[2]])
@@ -344,6 +369,7 @@ class BoardScene(QGraphicsScene):
             self.undo_action()
 
     def perform_action(self, from_pos, to_pos, arr_pos):
+        """Effectue une action déjà déterminée (par exemple si le joueur est une IA)"""
         self.ongoing_action = [from_pos, to_pos, arr_pos]
         try:
             piece_item = self.pieces_graphics_items.pop(from_pos)
@@ -358,6 +384,7 @@ class BoardScene(QGraphicsScene):
         PieceMoveAnimation(piece_item, to_point, finished=self.animate_action_arrow)
 
     def animate_action_arrow(self):
+        """Effectue l'animation de la flèche pour une action qui était déjà déterminée"""
         self.show_arrow()
 
         arrow_dest_tile_rect = self.get_tile_rect(*self.ongoing_action[2])
@@ -370,6 +397,7 @@ class BoardScene(QGraphicsScene):
 
 
     def move_piece(self, to_pos, undoing=False):
+        """Bouge la reine seléctionnée à la position to_pos"""
         self.can_undo_action = False
 
         from_pos = self.ongoing_action[1 if undoing else 0]
@@ -393,6 +421,10 @@ class BoardScene(QGraphicsScene):
         PieceMoveAnimation(piece_item, to_point, finished=None if undoing else self.handle_end_queen_move_animation)
 
     def handle_end_queen_move_animation(self):
+        """
+        Vérifie si l'action est valide, montre les marqueurs des destinations possibles et appelle le handler
+        pour que l'utilisateur puisse tirer sa flèche
+        """
         # si la position de la flèche est déjà connue, pas besoin de marquer les positions possibles
         num_actions = len(self.ongoing_action)
         if not 2 <= num_actions <= 3:
@@ -407,6 +439,7 @@ class BoardScene(QGraphicsScene):
         self.show_arrow()
 
     def show_arrow(self, rotate_on_mouse_position_change=True):
+        """Affiche l'image de la flèche à la position de la reine qui effectue l'action"""
         arrow_icon = QPixmap(ARROW_ICON)
         arrow_icon = self.scale_pixmap_tile_size(arrow_icon)
 
@@ -423,6 +456,10 @@ class BoardScene(QGraphicsScene):
 
 
     def mousePressEvent(self, event: 'QGraphicsSceneMouseEvent') -> None:
+        """
+        Écoute lorsque la la souris de l'utilisateur clique sur le plateau et appelle le handler approprié lorsqu'il
+        le faut
+        """
         if not self.listen_mouse_click_events:
             return
 
@@ -447,6 +484,7 @@ class BoardScene(QGraphicsScene):
         super(BoardScene, self).mousePressEvent(event)
 
     def highlight_reachable_tile_under_mouse(self, event):
+        """Surligne le marqueur de destination possible lorsque la souris est dessus"""
         if not self.highlighting_reachable_tiles_under_mouse or event is None:
             self.scene_delegate.change_cursor(Qt.ArrowCursor)
             return
@@ -472,10 +510,15 @@ class BoardScene(QGraphicsScene):
             self.scene_delegate.change_cursor(Qt.ArrowCursor)
 
     def set_arrow_rotation_to_mouse_position(self, event):
+        """
+        Ajuste la rotation de la flèche à la position de la souris.
+        Event est l'évènement de déplacement de la souris
+        """
         mouse_pos = event.scenePos()
         self.rotate_arrow_to_point(mouse_pos)
 
     def rotate_arrow_to_point(self, to_point):
+        """Ajuste la rotation de la flèche à la position donnée to_pos pour que celle-ci pointe vers to_pos"""
         arrow_queen_pos = self.moving_queen.sceneBoundingRect().center()
 
         # un peu de trigo pour trouver la rotation de la flèche
@@ -494,6 +537,7 @@ class BoardScene(QGraphicsScene):
         self.queen_arrow_graphics_item.setRotation(theta)
 
     def mouseMoveEvent(self, event: 'QGraphicsSceneMouseEvent') -> None:
+        """Écoute lorsque la la souris de l'utilisateur se déplace au dessus du plateau"""
         super(BoardScene, self).mouseMoveEvent(event)
 
         if self.highlighting_reachable_tiles_under_mouse:
@@ -504,6 +548,7 @@ class BoardScene(QGraphicsScene):
 
     @staticmethod
     def rescale_at_center(rect: QRectF, scale):
+        """Change la taille du rectangle rect sans changer la position de son centre"""
         rect_center = rect.center()
 
         rect.setSize(rect.size() * scale)
@@ -513,7 +558,7 @@ class BoardScene(QGraphicsScene):
 
 
 class PieceMoveAnimation(QGraphicsObject):
-
+    """Effectue une animation d'un QGraphicsItem"""
     def __init__(self, item, to_pos, finished=None, duration=500, easing_curve=QEasingCurve.InOutSine):
         super().__init__()
 
@@ -549,20 +594,33 @@ class PieceMoveAnimation(QGraphicsObject):
         self.item.setPos(self.pos_anim.currentValue())
 
 
-class BoardSceneDelegate:
+class BoardSceneViewDelegate:
+    """Protocole d'observateur de BoardScene"""
     def change_cursor(self, cursor):
+        """Est appelé lorsque le curseur de l'utilisateur doit changer"""
         raise NotImplemented
 
 
-class BoardDelegate:
+class BoardSceneDelegate:
+    """Protocole d'observateur de BoardScene"""
     def piece_selected(self, coord) -> [tuple]:
+        """
+        Est appelé lorsqu'une pièce a été séléctionnée. Doit renvoyer toutes les destinations possibles depuis
+        cette pièce
+        """
         raise NotImplemented
 
     def piece_moved(self, from_coord, to_coord) -> [tuple]:
+        """
+        Est appelé lorsqu'une pièce a été déplacée. Doit renvoyer toutes les destinations possibles de flèche depuis
+        cette pièce
+        """
         raise NotImplemented
 
     def is_action_valid(self, queen_from, queen_to, arr) -> bool:
+        """Doit renvoyer si l'action est valide"""
         raise NotImplemented
 
     def perform_action(self, queen_from, queen_to, arr):
+        """L'action a été effectuée sur le plateau. """
         raise NotImplemented

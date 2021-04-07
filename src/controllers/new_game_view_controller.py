@@ -5,7 +5,8 @@ from src.controllers.player_ui import HumanGuiPlayer, AIGuiPlayer
 from src.views.const_strings import HUMAN_PLAYER, AI_PLAYER
 
 
-class NewGameViewController(NewGameSettingsDelegate):
+class NewGameSettingsViewController(NewGameSettingsDelegate):
+    """Supervise la création d'un nouveau jeu avec NewGameSettingsView"""
     def __init__(self, delegate):
         self.new_game_settings_view = NewGameSettings(self, PLAYERS)
         self.new_game_settings_view.show()
@@ -16,6 +17,11 @@ class NewGameViewController(NewGameSettingsDelegate):
         self.delegate = delegate
 
     def is_board_file_valid(self, file_path) -> bool:
+        """
+        Renvoie si le fichier donnée est un fichier valide
+
+        la vérification se fait en initialisant le jeu. Si une erreur a lieu, le fichier est pas bien défini
+        """
         try:
             Amazons(file_path, self.ai_ai_delay)
             return True
@@ -23,6 +29,10 @@ class NewGameViewController(NewGameSettingsDelegate):
             return False
 
     def save_settings(self, file_path, players_str, ai_ai_delay) -> bool:
+        """
+        Crée une instance de Amazons et l'envoie aux observateurs (ici le AppController) si il est bon et renvoie
+        un bool, si oui ou non le jeu a pu être crée
+        """
         try:
             self.game = Amazons(file_path, show_text_board=False)
         except Exception:
@@ -45,5 +55,7 @@ class NewGameViewController(NewGameSettingsDelegate):
 
 
 class NewGameViewControllerDelegate:
+    """Protocole d'observateur de NewGameSettingsViewController"""
     def new_game_created(self, game: Amazons):
+        """Est appelé lorsqu'un nouveau jeu est crée"""
         pass

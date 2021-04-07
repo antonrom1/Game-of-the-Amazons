@@ -8,6 +8,7 @@ from src.controllers.point_pos_bridge import to_game_coord, to_ui_coord
 from src.models.action import Action
 from src.models.players import Player, AIPlayer
 from src.views.board_scene import BoardSceneDelegate
+from src.controllers.main_thread_executor import MainThreadExecutor
 from time import time
 
 
@@ -50,7 +51,7 @@ class HumanGuiPlayer(GuiPlayer, BoardSceneDelegate):
             pass
         self.can_act = False
         try:
-            self.delegate.played()
+            MainThreadExecutor.shared.run(self.delegate.played)
         except AttributeError:
             pass
 
@@ -149,7 +150,7 @@ class AIGuiPlayer(GuiPlayer, AIPlayer, BoardSceneDelegate):
                    self.should_stop_execution):
             pass
         try:
-            self.delegate.played(action)
+            MainThreadExecutor.shared.run(self.delegate.played, action)
         except AttributeError:
             pass
         while not (self.can_return_action or self.should_stop_execution):

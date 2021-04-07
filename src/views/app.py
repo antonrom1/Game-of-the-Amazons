@@ -1,8 +1,7 @@
-from PyQt5.QtWidgets import QWidget, QApplication
+from PyQt5.QtWidgets import QApplication
 from PyQt5.QtGui import QIcon
 from src.const import *
 from src.views.const_strings import APP_NAME
-from src.views.new_game_settings import NewGameSettings
 
 
 class AmazkombatApp(QApplication):
@@ -13,7 +12,4 @@ class AmazkombatApp(QApplication):
         # Load icon
         self.setWindowIcon(QIcon(APP_ICON))
 
-
-if __name__ == "__main__":
-    AmazkombatApp().exec_()
 

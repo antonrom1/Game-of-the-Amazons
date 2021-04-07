@@ -45,6 +45,7 @@ class BoardScene(QGraphicsScene):
         self.can_shoot_arrow = False
 
         self.can_undo_action = True
+        self.listen_mouse_click_events = True
 
         self.ongoing_action = []
 
@@ -85,10 +86,12 @@ class BoardScene(QGraphicsScene):
         )
 
     def allow_pieces_interaction(self, player):
+        self.listen_mouse_click_events = True
         for piece_pos, piece_graphical_item in self.pieces_graphics_items.items():
             piece_graphical_item.setFlag(QGraphicsItem.ItemIsSelectable, self.pieces[piece_pos] == player)
 
     def stop_all_possible_interaction(self):
+        self.listen_mouse_click_events = False
         for piece_player, piece_graphical_item in self.pieces_graphics_items.items():
             piece_graphical_item.setFlag(QGraphicsItem.ItemIsSelectable, False)
 
@@ -206,10 +209,6 @@ class BoardScene(QGraphicsScene):
         self.tile_pixel_size = self.pixel_board_size / self.n
         self.clear()
         self._draw()
-
-    def animate_action(self, from_pos, to_pos, arr_pos):
-        self.ongoing_action = [from_pos, to_pos, arr_pos]
-
 
     def set_tile_color(self, tile_pos, color):
         tile = self.tiles_graphics_items[tile_pos]
@@ -346,19 +345,15 @@ class BoardScene(QGraphicsScene):
 
     def perform_action(self, from_pos, to_pos, arr_pos):
         self.ongoing_action = [from_pos, to_pos, arr_pos]
-        piece_item = self.pieces_graphics_items.pop(from_pos)
+        try:
+            piece_item = self.pieces_graphics_items.pop(from_pos)
+        except KeyError:
+            return
         self.pieces_graphics_items[to_pos] = piece_item
 
         to_point = self.get_tile_rect(*to_pos).topLeft()
         self.moving_queen = piece_item
         self.pieces[to_pos] = self.pieces.pop(from_pos)
-        # try:
-        #     self.pieces[to_pos] = self.pieces.pop(from_pos)
-        # except KeyError:
-        #     self.moving_queen = None
-        #     self.pieces_graphics_items[from_pos] = self.pieces_graphics_items.pop(to_pos)
-        #     self.ongoing_action = []
-        #     return
         AmazonsSound.shared.play_piece_move_sfx()
         PieceMoveAnimation(piece_item, to_point, finished=self.animate_action_arrow)
 
@@ -368,7 +363,10 @@ class BoardScene(QGraphicsScene):
         arrow_dest_tile_rect = self.get_tile_rect(*self.ongoing_action[2])
         arrow_dest_point = arrow_dest_tile_rect.center()
         self.rotate_arrow_to_point(arrow_dest_point)
-        self.shoot_arrow(self.ongoing_action[2], check_if_move_is_valid=False)
+        try:
+            self.shoot_arrow(self.ongoing_action[2], check_if_move_is_valid=False)
+        except RuntimeError:
+            return
 
 
     def move_piece(self, to_pos, undoing=False):
@@ -425,6 +423,9 @@ class BoardScene(QGraphicsScene):
 
 
     def mousePressEvent(self, event: 'QGraphicsSceneMouseEvent') -> None:
+        if not self.listen_mouse_click_events:
+            return
+
         if self.ongoing_action:
             new_pos = self.get_outlined_tile_at_coord(event.scenePos())
             if new_pos is not None:

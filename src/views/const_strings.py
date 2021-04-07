@@ -3,6 +3,9 @@ APP_NAME = "Amazkombat"
 
 # SETTINGS
 
+FILE = "Fichier"
+NEW_GAME = "Créer un nouveau jeu"
+YOU_WILL_LOSE_CURR_GAME = "Vous allez perdre le jeu actuel. Continuer?"
 
 SETTINGS = "Paramètres"
 
@@ -33,5 +36,7 @@ START_GAME = "Commencer à jouer"
 RESTART_GAME = "Réinitialiser la partie"
 
 PLAYER_WON_MESS = "Le joueur {} a gagné"
+
+CURRENT_TURN = "Au tour de: "
 
 

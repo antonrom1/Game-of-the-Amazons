@@ -12,17 +12,20 @@ class MainThreadExecutor(QObject):
 
     def __init__(self):
         super(MainThreadExecutor, self).__init__()
-        self.main_thread_func = []
+        self.main_thread_functions = []
         self._signal.connect(self._run)
 
     def run(self, f, *args, **kwargs):
-        self.main_thread_func.append((f, args, kwargs))
+        self.main_thread_functions.append((f, args, kwargs))
         self._signal.emit()
 
     def _run(self):
-        while self.main_thread_func:
-            func, args, kwargs = self.main_thread_func.pop(0)
-            func(*args, **kwargs)
+        while self.main_thread_functions:
+            func, args, kwargs = self.main_thread_functions.pop(0)
+            try:
+                func(*args, **kwargs)
+            except RuntimeError:
+                continue
 
 
 MainThreadExecutor.init_shared_executor()

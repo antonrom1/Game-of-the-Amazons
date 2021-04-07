@@ -15,4 +15,14 @@ class AppController(NewGameViewControllerDelegate, GameWidgetDelegate):
 
 
     def new_game_created(self, game):
-        self.game_controller = GameViewController(game)
+        if self.game_controller is None:
+            self.game_controller = GameViewController(game)
+            self.game_controller.window.add_delegate(self)
+            self.new_game_controller = None
+
+    def create_new_game(self):
+        assert isinstance(self.game_controller.window, GameWidget)
+        self.new_game_controller = NewGameViewController(self)
+
+        self.game_controller.window.close()
+        self.game_controller = None

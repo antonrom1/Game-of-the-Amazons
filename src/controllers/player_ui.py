@@ -90,6 +90,7 @@ class HumanGuiPlayer(GuiPlayer, BoardDelegate):
 class AIGuiPlayer(GuiPlayer, AIPlayer, BoardDelegate):
     def __init__(self, ai_ai_delay, *args, **kwargs):
         super(AIGuiPlayer, self).__init__(*args, **kwargs)
+        self.timer.timeouts_soon_threshold = 0.15
         self.ai_ai_delay = ai_ai_delay
         self.action_start_time = None
 

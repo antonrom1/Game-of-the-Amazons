@@ -46,8 +46,6 @@ MESSAGE_COUP = "Joueur {}, donnez un coup de format 'position reine avant > posi
 # GUI
 ###############
 
-XDG_RUNTIME_DIR_ENVIRON = {'XDG_RUNTIME_DIR' : '/tmp/runtime-root'}
-
 # BOARD
 DEFAULT_TILE_COLORS = ["af3232", "ffd7c8"]
 MIN_TILE_SIZE = 25
@@ -68,7 +66,7 @@ QUEEN_ICONS = [join(ICONS_DIR, filename) for filename in QUEENS_ICONS_FILENAMES]
 ARROW_ICON = join(ICONS_DIR, 'arrow.png')
 
 MUSIC_ICON = join(ICONS_DIR, 'music-note.png')
-NO_MUSIC_ICON = join(ICONS_DIR, 'no-music-note.png')
+NO_MUSIC_ICON = join(ICONS_DIR, 'no_music_note.png')
 
 
 SOUND_DIR = join(ASSETS_DIR, 'sounds')
@@ -79,3 +77,4 @@ RICKROLL = join(SOUND_DIR, 'Rick Astley - Never Gonna Give You Up (Video).wav')
 SOUNDTRACK = join(SOUND_DIR, 'Richard Wagner - Ride Of The Valkyries.wav')
 
 REACHABLE_INDICATOR_SIZE_TO_TILE_SIZE_RATIO = 0.2
+ICONS_WIDTH = 50

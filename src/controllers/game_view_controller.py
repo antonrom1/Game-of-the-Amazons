@@ -1,3 +1,9 @@
+"""
+Prénom:     Anton
+Nom:        ROMANOVA
+Matricule:  521935
+"""
+
 import threading
 from src.controllers.player_ui import GuiPlayerDelegate, HumanGuiPlayer
 from src.models.amazons import Amazons, AmazonsDelegate

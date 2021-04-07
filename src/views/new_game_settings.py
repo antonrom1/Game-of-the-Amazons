@@ -1,3 +1,9 @@
+"""
+Prénom:     Anton
+Nom:        ROMANOVA
+Matricule:  521935
+"""
+
 from PyQt5.QtWidgets import QWidget, QFormLayout, QSlider, QComboBox, QPushButton, QFileDialog, QLabel, QMessageBox
 from PyQt5.QtCore import Qt
 from src.views import const_strings

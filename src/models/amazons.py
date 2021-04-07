@@ -1,3 +1,9 @@
+"""
+Prénom:     Anton
+Nom:        ROMANOVA
+Matricule:  521935
+"""
+
 from src.models.board import Board
 from src.models.players import *
 from src.const import *

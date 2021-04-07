@@ -1,3 +1,9 @@
+"""
+Prénom:     Anton
+Nom:        ROMANOVA
+Matricule:  521935
+"""
+
 from PyQt5 import QtWidgets
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QResizeEvent

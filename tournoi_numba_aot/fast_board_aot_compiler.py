@@ -1,3 +1,9 @@
+"""
+Prénom:     Anton
+Nom:        ROMANOVA
+Matricule:  521935
+"""
+
 import numpy as np
 from numba.pycc import CC
 from numba import njit

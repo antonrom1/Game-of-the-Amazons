@@ -1,3 +1,9 @@
+"""
+Prénom:     Anton
+Nom:        ROMANOVA
+Matricule:  521935
+"""
+
 from PyQt5.QtWidgets import QGraphicsScene, QGraphicsItem, QGraphicsSceneMouseEvent, QGraphicsObject, QGraphicsEllipseItem
 from PyQt5.QtCore import QPointF, Qt, QRectF, QPropertyAnimation, QEasingCurve
 from PyQt5.QtGui import QPixmap, QBrush, QPen, QColor

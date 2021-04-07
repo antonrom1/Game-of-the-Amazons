@@ -1,3 +1,9 @@
+"""
+Prénom:     Anton
+Nom:        ROMANOVA
+Matricule:  521935
+"""
+
 from src.models.amazons import Amazons
 from src.views.new_game_settings import NewGameSettings, NewGameSettingsDelegate
 from src.const import PLAYERS, AI_AI_DELAY_DEFAULT_MILLIS

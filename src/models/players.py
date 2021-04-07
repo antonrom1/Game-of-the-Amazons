@@ -1,4 +1,9 @@
-import random
+"""
+Prénom:     Anton
+Nom:        ROMANOVA
+Matricule:  521935
+"""
+
 from abc import ABCMeta, abstractmethod
 from src.const import *
 from src.models.exceptions import *

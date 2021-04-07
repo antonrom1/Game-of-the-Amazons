@@ -1,3 +1,9 @@
+"""
+Prénom:     Anton
+Nom:        ROMANOVA
+Matricule:  521935
+"""
+
 from src.controllers.point_pos_bridge import to_game_coord, to_ui_coord
 from src.models.action import Action
 from src.models.players import Player, AIPlayer

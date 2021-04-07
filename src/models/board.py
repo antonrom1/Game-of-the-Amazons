@@ -1,3 +1,9 @@
+"""
+Prénom:     Anton
+Nom:        ROMANOVA
+Matricule:  521935
+"""
+
 from src.models.exceptions import InvalidActionError
 from src.models.action import Action, Pos2D
 from src.const import *

@@ -1,3 +1,9 @@
+"""
+Prénom:     Anton
+Nom:        ROMANOVA
+Matricule:  521935
+"""
+
 from PyQt5.QtWidgets import QApplication
 from PyQt5.QtGui import QIcon
 from src.const import *

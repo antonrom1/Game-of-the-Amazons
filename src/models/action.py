@@ -1,3 +1,9 @@
+"""
+Prénom:     Anton
+Nom:        ROMANOVA
+Matricule:  521935
+"""
+
 from src.const import *
 from src.models.exceptions import *
 from src.models.pos2d import Pos2D

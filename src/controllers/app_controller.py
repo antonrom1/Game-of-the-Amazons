@@ -1,3 +1,9 @@
+"""
+Prénom:     Anton
+Nom:        ROMANOVA
+Matricule:  521935
+"""
+
 from src.views.app import AmazkombatApp
 from src.controllers.new_game_view_controller import NewGameSettingsViewController, NewGameViewControllerDelegate
 from src.controllers.game_view_controller import GameViewController

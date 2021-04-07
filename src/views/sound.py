@@ -1,3 +1,9 @@
+"""
+Prénom:     Anton
+Nom:        ROMANOVA
+Matricule:  521935
+"""
+
 from os import environ
 
 environ['PYGAME_HIDE_SUPPORT_PROMPT'] = '1'

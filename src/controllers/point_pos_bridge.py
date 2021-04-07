@@ -1,3 +1,9 @@
+"""
+Prénom:     Anton
+Nom:        ROMANOVA
+Matricule:  521935
+"""
+
 from src.models.pos2d import Pos2D
 
 def to_ui_coord(board_size, coord):

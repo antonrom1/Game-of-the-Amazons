@@ -6,6 +6,7 @@ from os import path
 
 
 class NewGameSettings(QWidget):
+    """Fenêtre de configuration de nouveau jeu"""
     VERTICAL_SPACING = 15
 
     def __init__(self, delegate, player_ids, ai_ai_delay=AI_AI_DELAY_DEFAULT_MILLIS, curr_file_path=const_strings.NO_FILE):
@@ -104,6 +105,7 @@ class NewGameSettings(QWidget):
     ####
 
     def setup_ai_ai_slider(self):
+        """Crée le slider ai_ai"""
         min_delay, max_delay = AI_AI_DELAY_MINMAX_MILLIS
 
         self.ai_ai_slider.setMinimum(min_delay)
@@ -115,6 +117,7 @@ class NewGameSettings(QWidget):
 
     @property
     def is_mode_ai_ai(self):
+        """Renvoie si les deux joueurs sont mis à AI"""
         return all(combo.currentText() == const_strings.AI_PLAYER for combo in self.player_combos.values())
 
     @property
@@ -159,6 +162,7 @@ class NewGameSettings(QWidget):
 
     @property
     def is_file_defined(self):
+        """Renvoie si le fichier de jeu est défini"""
         return self.curr_file_status_label.text() != const_strings.NO_FILE
 
     def setup_load_game_row(self):
@@ -216,6 +220,7 @@ class NewGameSettings(QWidget):
 
 
     def handle_delete_file(self):
+        """Enlève le fichier de jeu de l'interface"""
         self.curr_file_status_label.setText(const_strings.NO_FILE)
         self.disable_enable_buttons()
         self.update_load_file_button_label()
@@ -227,6 +232,7 @@ class NewGameSettings(QWidget):
     ####
 
     def setup_save_cancel_buttons(self):
+        """Crée les boutons de sauvegarde et d'annulation"""
         self.save_button = QPushButton(const_strings.SAVE)
         self.save_button.setDefault(True)
         cancel_button = QPushButton(const_strings.CANCEL)
@@ -237,12 +243,15 @@ class NewGameSettings(QWidget):
         self.settings_form.addRow(cancel_button, self.save_button)
 
     def handle_cancel(self):
+        """Ferme le programme"""
         self.close()
 
     def _add_sep_row(self):
+        """Ajoute une ligne de séparation"""
         self.settings_form.addRow('', QLabel())
 
     def handle_save(self):
+        """Renvoie les paramètres de jeu à l'observateur"""
         if self.board_file_path != const_strings.NO_FILE:
             board = path.abspath(self.board_file_path)
         else:
@@ -268,6 +277,8 @@ class NewGameSettings(QWidget):
 
     @staticmethod
     def _warn(mess, buttons=QMessageBox.Ok):
+        # crée un message d'erreur
+        # mess est un string
         warning_box = QMessageBox()
         warning_box.setIcon(QMessageBox.Warning)
         warning_box.setText(mess)
@@ -276,8 +287,11 @@ class NewGameSettings(QWidget):
 
 
 class NewGameSettingsDelegate:
+    """Protocole pour les observateurs de NewGameSettings"""
     def is_board_file_valid(self, file_path) -> bool:
+        """Est appelé pour vérifier si le fichier de jeu est valide"""
         raise NotImplemented
 
     def save_settings(self, file_path, players_str, ai_ai_delay) -> bool:
+        """Renvoie les paramètres pour le nouveau jeu"""
         raise NotImplemented

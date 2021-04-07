@@ -16,19 +16,25 @@ from exceptions import *
 try:
     from tournoi_numba_aot import fast_board
 except ImportError:
-    print("Erreur d'import des binaires précompilés par numba...")
+    print("Impossible d'importer les binaires précompilés par numba...")
     from pathlib import Path
     if Path('tournoi_numba_aot').is_dir():
-        print("Pourtant le dossier a été importé...")
-        print("essai de compilation")
+        import shutil
+        try:
+            shutil.rmtree('tournoi_numba_aot/__pycache__')  # pour éviter des erreurs d'import
+        except OSError:
+            pass
+        print("Probablement la version de python utilisée est différente")
+        print("Essayons de compiler... ceci va prendre ~5s et se fera qu'une seule fois")
         try:
             from tournoi_numba_aot import fast_board_aot_compiler
             fast_board_aot_compiler.compile()
         except Exception as e:
-            print("Une erreur s'est produite lors de la compilation..")
+            print("Une erreur s'est produite lors de la compilation... :( ")
             print(e)
             exit()
         else:
+            from tournoi_numba_aot import fast_board
             print("Compilation réussie, continuons!")
     else:
         print("Le dossier numba n'a pas été importé")
@@ -199,7 +205,6 @@ class TournoiAIPlayer(AIPlayer):
         assert not self.timer.timed_out and action_tuple is not None, f"Timed out or no move found {self.timer.time}, {action_tuple}"
 
         action = self.fast_board.np_to_action(action_tuple, self.player_id)
-        print(type(action_tuple))
         return action, action_tuple
 
     def MTDF(self, root, f, d):

@@ -7,10 +7,36 @@ import time
 import numpy as np
 from src.models.board import EndOfGameStatus
 from src.models.pos2d import Pos2D
-from enum import Enum
 from functools import lru_cache
 
 import numba
+
+try:
+    from src.models.numba_aot import fast_board
+except ImportError:
+    print("Impossible d'importer les binaires précompilés par numba...")
+    from pathlib import Path
+    if Path('src/models/numba_aot').is_dir():
+        import shutil
+        try:
+            shutil.rmtree('src/models/numba_aot/__pycache__')  # pour éviter des erreurs d'import par après
+        except OSError:
+            pass
+        print("Probablement la version de python utilisée est différente")
+        print("Essayons de compiler... ceci va prendre ~5s et se fera qu'une seule fois")
+        try:
+            from src.models.numba_aot import fast_board_aot_compiler
+            fast_board_aot_compiler.compile()
+        except Exception as e:
+            print("Une erreur s'est produite lors de la compilation..")
+            print(e)
+            exit()
+        else:
+            from src.models.numba_aot import fast_board
+            print("Compilation réussie, continuons!")
+    else:
+        print("Le dossier numba n'a pas été importé")
+        exit()
 
 
 class Player(metaclass=ABCMeta):
@@ -75,8 +101,7 @@ class HumanPlayer(Player):
                 continue
         return action
 
-
-class MinimaxNode:
+class GameTree:
     def __init__(self, action=None, score=None):
         self.__score = score
         self.__action = action
@@ -110,7 +135,55 @@ class MinimaxNode:
 
 class AIPlayer(Player):
     """
-    Spécialisation de la classe Player représentant un joueur utilisant un minimax
+    Une intelligence artificielle pour le jeu des Amazones utilisant l'algorithme Minimax avec plusieurs améliorations
+
+    MINIMAX:
+        L'approfondissement itératif a été implémenté pour que l'IA puisse retourner une action en temps voulu
+
+            Tant qu'il reste du temps (si Timer.timeouts_soon() est à False), minimax à la profondeur suivante est
+            appelée.
+            L'arbre de jeu déjà évalué est sauvegardé dans la structure GameTree, ce qui permet à Minimax de trier les
+            actions afin de traiter les plus favorables avant pour les profondeaurs suivantes afin que le MTDF puisse
+            éliminer le plus de branches.
+
+        Le MTDF (Memory-enhanced Test Driver with node n and value f) avec l'élangage alpha-beta
+            permet de réduire le le nombre d'actions évalués.
+            Dans le but d'accélérer au plus la recherche, une estimation de la fonction économique doit être donnée.
+            Ici, l'estimation donnée pour le premier tour est 0, sinon la fonction économique pour l'action précédente.
+
+        Pour minimax, si l'arbre de jeu n'est pas vide (grâce au approfondissement itératif), les actions sont triées
+            dans l'ordre décroissant pour pouvoir éliminer le plus de branches grâce au alpha-beta pruning
+
+    FONCTION ÉCONOMIQUE:
+        La fonction économique est la combinaison linéaire de plusieurs heuristiques.
+        Plus précisément:
+
+        Mobilité:
+            la somme de tous les mouvements (pas actions) possibles pour un joueur - celle de l'autre joueur
+
+        Territoire:
+            le # de cases qui appartiennent à un joueur - # de cases qui appartiennent à l'autre.
+            Une case appartient à un joueur si celui-ci peut l'atteindre en moins de mouvements (Pas actions!)
+            que l'autre. Si les deux peuvent l'atteindre en un même # de mouvements, un quart de point sera attribué
+            au joueur à qui est le tour.
+        Portée:
+            Le nombre total de cases que le joueur peut atteindre - le nombre total de cases que l'autre
+            joueur peut atteindre. Une case atteignable est une case que le joueur peut atteindre en un nombre
+            arbitraire de mouvements avec des mouvements légaux.
+        Territoire relatif:
+            Lorsqu'une case n'est accessible que par un seul joueur, 4 points sont attribués pour cette case, sinon
+            le # de tours nécessaires pour atteindre cette case pour l'autre joueur - ce le # de tours pour ce joueur
+
+    OPTIMISATIONS:
+        Dans le but d'accélérer les actions et les fonctions d'évaluation, une classe FastBoard a été crée.
+            Cette classe tient en mémoire une matrice numpy de int8 qui représente le plateau.
+            Les opérations sur ce plateau sont significativement plus rapides
+
+        La fonction possible_moves et reachability_grid sont évaluées par des fonctions pré-compilées avec Numba
+
+        Également dans le but d'accélérer minimax, la vérification de fin de jeu prématurée ne se fait pas:
+            cette vérification demande trop de ressources pour très peu... grâce à la fonction économique, l'IA a
+            finalement une très bonne estimation de l'état favorable ou non de jeu.
     """
 
     def __init__(self, board, player_id, fact=0, timeout=2):
@@ -131,7 +204,14 @@ class AIPlayer(Player):
             Action: le meilleur coup déterminé via minimax
         """
         self.timer = Timer(self.timeout)
-        return self.iterative_deepening()
+
+        # ~100x plus rapide de mettre le plateau à jour avec les mouvements de history que de le recopier (~10e-5 s)
+        self.update_board()
+
+        action, action_np = self.iterative_deepening()
+
+        self.fast_board.act(*action_np, self.player_id)
+        return action
 
     def update_board(self):
         i = -1
@@ -148,14 +228,18 @@ class AIPlayer(Player):
             i -= 1
 
     def iterative_deepening(self, max_depth=10):
+        """
+        L'approfondissement itératif
+        args:
+            max_depth: int
 
-        # ~100x plus rapide de mettre le plateau à jour avec les mouvements de history que de le recopier (~10e-5 s)
-        self.update_board()
-        root = MinimaxNode()
+        return: action, action_np
+            Action, tuple(from, to, arrow)
+        """
 
+        root = GameTree()
         depth = 1
-
-        best_move = None
+        action_tuple = None
 
         while True:
             best_child, remaining_depth = self.MTDF(root, self.last_score, depth)
@@ -164,30 +248,17 @@ class AIPlayer(Player):
             should_go_deeper = not remaining_depth and not self.timer.timeouts_soon() and depth < max_depth
 
             if best_child.action is not None:
-                best_move = best_child.action
+                action_tuple = best_child.action
 
             if not should_go_deeper:
                 break
 
             depth += 1
 
-        print(self.timer.time, best_move, f"depth: {depth}")
+        assert action_tuple is not None, "No move found"
 
-        # s'éliminer si le timer a timed out
-        assert not self.timer.timed_out and best_move is not None, f"Timed out or no move found {self.timer.time}, {best_move}"
-
-
-        action = self.fast_board.np_to_action(best_move, self.player_id)
-
-        self.fast_board.act(*best_move, self.player_id)
-
-        try:
-            self.scores.append(best_child.scores)
-        except AttributeError:
-            pass
-
-        print(best_child.score)
-        return action
+        action = self.fast_board.np_to_action(action_tuple, self.player_id)
+        return action, action_tuple
 
     def MTDF(self, root, f, d):
         best_node_depth = 0
@@ -212,7 +283,7 @@ class AIPlayer(Player):
 
         return best_node, best_node_depth
 
-    def minimax(self, depth, parent_node, alpha=-INF, beta=+INF, maximizing=True) -> (MinimaxNode, int):
+    def minimax(self, depth, parent_node, alpha=-INF, beta=+INF, maximizing=True) -> (GameTree, int):
         """
         Détermine le coup optimal à jouer selon l'algorithme minimax.
 
@@ -251,11 +322,11 @@ class AIPlayer(Player):
             return parent_node, depth
 
         if depth == 0:
-            parent_node.score = self.fast_board.heuristics_linear_comb()
+            parent_node.score = self.objective_function()
             return parent_node, 0
 
         if not parent_node.children:
-            parent_node.children[:] = [MinimaxNode(action) for action in self.fast_board.possible_actions(player)]
+            parent_node.children[:] = [GameTree(action) for action in self.fast_board.possible_actions(player)]
 
         # A sorted list will significantly speed up alpha-beta pruning
         if any(child.score is not None for child in parent_node.children):
@@ -304,12 +375,16 @@ class AIPlayer(Player):
 
         return best_child, best_score_remaining_depth
 
+    def objective_function(self):
+        return self.fast_board.heuristics_linear_comb()
+
 
 class Timer:
     def __init__(self, time_limit=None):
         self._start = time.time()
         self._end = None
         self._time_limit = time_limit
+        self.timeouts_soon_threshold = 0.15
 
     def stop(self):
         self._end = time.time()
@@ -326,9 +401,9 @@ class Timer:
         except TypeError:
             raise ValueError("No time limit defined")
 
-    def timeouts_soon(self, threshold=0.07):
+    def timeouts_soon(self):
         try:
-            return self._time_limit <= self.time + threshold
+            return self._time_limit <= self.time + self.timeouts_soon_threshold
         except TypeError:
             raise ValueError("No time limit defined")
 
@@ -350,16 +425,6 @@ class FastBoard:
         self.other_player = PLAYER_1 if player == PLAYER_2 else PLAYER_2
 
         self.moves_cache = np.full((self.N, self.N, self.num_tiles, 2), -1, dtype=np.int8)
-
-        self.compile_numba()
-
-    def compile_numba(self):
-        """appelle toutes les méthodes jitted (_player_reachability_numba, _possible_moves_numba et whos_territory)"""
-        try:
-            self.possible_moves_numba(self.queens[0][0])
-        except IndexError:
-            return
-        self._player_reachability(self.player)
 
     def _clear_cache(self):
         self.possible_moves_numba.cache_clear()
@@ -417,7 +482,7 @@ class FastBoard:
         self.empty_cells[to_pos] = False
 
         # refresh queens positions
-        self.queens[player][self.queens[player].index(from_pos)] = to_pos
+        self.queens[player][self.queens[player].index(tuple(from_pos))] = to_pos
 
         self._clear_cache()
 
@@ -431,7 +496,7 @@ class FastBoard:
         prev_added = np.empty((self.num_tiles, 2), dtype=np.int8)
         prev_added_idx = len(self.queens[player])
         prev_added[:prev_added_idx] = self.queens[player]
-        res = self._player_reachability_numba(
+        res = fast_board.reachability_grid(
             self.grid,
             self.N,
             self.DIRECTIONS,
@@ -439,8 +504,7 @@ class FastBoard:
             self.empty_cells,
             self.moves_cache,
             prev_added,
-            prev_added_idx,
-            self._possible_moves_numba
+            prev_added_idx
         )
         return res
 
@@ -449,14 +513,16 @@ class FastBoard:
         for player in PLAYERS:
             add = -1 if player == self.player else 1
             for queen in self.queens[player]:
-                possible_moves = self._possible_moves_numba(self.DIRECTIONS,
-                                                            self.N,
-                                                            self.num_tiles,
-                                                            self.empty_cells,
-                                                            np.array(queen, dtype=np.int8),
-                                                            self.moves_cache)
+                moves = fast_board.possible_moves(self.DIRECTIONS,
+                                                  self.N,
+                                                  self.num_tiles,
+                                                  self.empty_cells,
+                                                  np.array(queen, dtype=np.int8),
+                                                  self.moves_cache,
+                                                  False
+                                                  )
 
-                if len(possible_moves) == 0:
+                if len(moves) == 0:
                     blocked_queens_eval += add
         return blocked_queens_eval
 
@@ -466,42 +532,18 @@ class FastBoard:
         for player in PLAYERS:
             add = 1 if player == self.player else -1
             for queen in self.queens[player]:
-                possible_moves = self._possible_moves_numba(self.DIRECTIONS,
-                                                            self.N,
-                                                            self.num_tiles,
-                                                            self.empty_cells,
-                                                            np.array(queen, dtype=np.int8),
-                                                            self.moves_cache)
+                possible_moves = fast_board.possible_moves(self.DIRECTIONS,
+                                                           self.N,
+                                                           self.num_tiles,
+                                                           self.empty_cells,
+                                                           np.array(queen, dtype=np.int8),
+                                                           self.moves_cache,
+                                                           False
+                                                           )
 
                 for move in possible_moves:
                     mobility_grid[tuple(move)] += add
         return np.sum(mobility_grid)
-
-
-
-    @staticmethod
-    @numba.njit(cache=True)
-    def _player_reachability_numba(grid, N, DIR, num_tiles, empty_cells, moves_cache, prev_added, prev_added_idx, possible_moves):
-        reachability_grid = np.zeros_like(grid, dtype=np.int8)
-
-        reachability = 1
-
-        new_positions = np.empty_like(prev_added, dtype=np.int8)
-        new_positions_idx = 0
-
-        while prev_added_idx != 0:
-            for from_pos in prev_added[:prev_added_idx]:
-                moves = possible_moves(DIR, N, num_tiles, empty_cells, from_pos, moves_cache)
-                for pos_i, pos_j in moves:
-                    if reachability_grid[pos_i, pos_j] == 0:
-                        reachability_grid[pos_i, pos_j] = reachability
-                        new_positions[new_positions_idx] = pos_i, pos_j
-                        new_positions_idx += 1
-            reachability += 1
-            prev_added[:new_positions_idx] = new_positions[:new_positions_idx]
-            prev_added_idx = new_positions_idx
-            new_positions_idx = 0
-        return reachability_grid
 
     def territory_reachability(self):
         """
@@ -572,7 +614,15 @@ class FastBoard:
         except IndexError:
             return 0
         else:
-            return len(self.possible_moves_numba(queen))
+            possible_moves = fast_board.possible_moves(self.DIRECTIONS,
+                                                       self.N,
+                                                       self.num_tiles,
+                                                       self.empty_cells,
+                                                       np.array(queen, dtype=np.int8),
+                                                       self.moves_cache,
+                                                       False
+                                                       )
+            return len(possible_moves)
 
     def mobility_evaluation(self):
         """Renvoie la différence entre le nombre d'actions possibles des reines"""
@@ -603,7 +653,7 @@ class FastBoard:
     @lru_cache
     def has_moves(self, player):
         """Fonction booléenne qui renvoie si le joueur player peut joueur"""
-        return bool(self.possible_actions(player, return_first_found=True))
+        return len(self.possible_actions(player, return_first_found=True)) > 0
 
     def __repr__(self):
         res = ''
@@ -616,57 +666,25 @@ class FastBoard:
     @lru_cache
     def possible_moves_numba(self, from_pos, ignore_pos=None, return_first_found=False):
         """Renvoie les mouvements possibles d'un"""
-        ignore_pos_np = np.array([-1, -1], dtype=np.int8)
         if ignore_pos:
             ignore_pos_np = np.array(ignore_pos, dtype=np.int8)
-        res = self._possible_moves_numba(self.DIRECTIONS,
-                                         self.N,
-                                         self.num_tiles,
-                                         self.empty_cells,
-                                         np.array(from_pos, dtype=np.int8),
-                                         self.moves_cache,
-                                         ignore_pos_np,
-                                         return_first_found=return_first_found)
+            res = fast_board.possible_moves_ignore_pos(self.DIRECTIONS,
+                                            self.N,
+                                            self.num_tiles,
+                                            self.empty_cells,
+                                            np.array(from_pos, dtype=np.int8),
+                                            ignore_pos_np,
+                                            return_first_found)
+        else:
+            res = fast_board.possible_moves(self.DIRECTIONS,
+                                             self.N,
+                                             self.num_tiles,
+                                             self.empty_cells,
+                                             np.array(from_pos, dtype=np.int8),
+                                             self.moves_cache,
+                                             return_first_found)
         res = tuple(map(tuple, res))
         return res
-
-    @staticmethod
-    @numba.njit(cache=True)
-    def _possible_moves_numba(DIR,
-                              N,
-                              num_tiles,
-                              empty_cells,
-                              from_pos,
-                              cache,
-                              ignore_pos=np.array([-1, -1], dtype=np.int8),
-                              return_first_found: bool = False):
-
-        if ignore_pos[0] == -1 and cache[from_pos[0], from_pos[1], 0, 0] != -1:
-            cached_res = cache[from_pos[0], from_pos[1]]
-            until_idx = np.argmax(cached_res[:, 0] == -1)
-            return cache[from_pos[0], from_pos[1], :until_idx]
-
-        moves = np.empty((num_tiles, 2), dtype=np.int8)
-        moves_idx = 0
-        for d in DIR:
-            # i, j = from_pos
-            curr_pos = np.copy(from_pos)
-            while True:
-                curr_pos += d
-                if not (0 <= curr_pos[0] < N and 0 <= curr_pos[1] < N):
-                    break
-                # print(self.empty_cells[i, j])
-                if np.all(curr_pos == ignore_pos) or empty_cells[curr_pos[0], curr_pos[1]]:
-                    if return_first_found:
-                        return curr_pos.reshape(1, 2)
-                    moves[moves_idx] = curr_pos
-                    moves_idx += 1
-                else:
-                    break
-        final_moves = moves[:moves_idx]
-        if not return_first_found and ignore_pos[0] == -1:
-            cache[from_pos[0], from_pos[1], :moves_idx] = final_moves
-        return final_moves
 
     @lru_cache
     def possible_actions(self, player, return_first_found=False):
@@ -682,33 +700,6 @@ class FastBoard:
         return actions
 
 
-class GameStage(Enum):
-    Opening = 0  # première phase de jeu
-    MiddleGame = 1  # commence lorsque 25% du plateau est rempli
-    EndGame = 2  # commence lorsque chaque carré ne peut être atteint que par un seul joueur
-
-
-if __name__ == "__main__":
-    from src.models.board import Board
-    from src.models.amazons import Amazons
-    from time import time
-
-    g = Amazons('/Users/anton/Desktop/partie4/ressources/boards/plateau_3.txt')
-    print('Initializing board')
-    board = FastBoard(g.board, PLAYER_2)
-    init_pos = board.queens[0][0]
-    init_pos_np = np.array(init_pos, dtype=np.int8)
-    board.possible_moves_numba(init_pos_np, cache=False)
-
-    start = time()
-    for _ in range(50000):
-        board.possible_moves(init_pos, cache=False)
-    print(time() - start)
-
-    start = time()
-    for _ in range(50000):
-        board.possible_moves_numba(init_pos_np, cache=False)
-    print(time() - start)
 @numba.vectorize('int8(int8, int8)', cache=True)
 def _whos_relative_territory(p1_reachability, p2_reachability):
     if p1_reachability == p2_reachability == 0:
@@ -719,4 +710,3 @@ def _whos_relative_territory(p1_reachability, p2_reachability):
         return -4
     else:
         return p2_reachability - p1_reachability
-

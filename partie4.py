@@ -1,31 +1,8 @@
-from sys import argv
-from os.path import isfile
-
-from src.models.amazons import Amazons
-from src.models.players import AIPlayer
-from src.const import PLAYER_1, PLAYER_2
 from src.controllers.app_controller import AppController
 
-def check_file():
-    if len(argv) < 2:
-        print('Usage: python3 partie4.py <path>')
-        return False
-    if not isfile(argv[1]):
-        print(f'{argv[1]} n\'est pas un chemin valide vers un fichier')
-        return False
-    return True
-
 def main():
-    if not check_file():
-        AppController()
-        return
-    game = Amazons(argv[1])
-    game.players = AIPlayer(game.board, PLAYER_1, 1, 2), AIPlayer(game.board, PLAYER_2, 1, 2)
-    game.play()
+    AppController()
 
 
 if __name__ == '__main__':
-    import random
-
-    random.seed(0xCAFE)
     main()
